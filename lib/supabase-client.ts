@@ -1,0 +1,24 @@
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  // Ensures session is persisted (not just in-memory)
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: 'recursive-eco-auth'
+      },
+      cookieOptions: {
+        domain: '.recursive.eco',
+        maxAge: 100000000,
+        path: '/',
+        sameSite: 'lax',
+        secure: true,
+      },
+    }
+  )
+}
