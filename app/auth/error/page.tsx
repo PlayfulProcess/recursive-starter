@@ -9,12 +9,16 @@ function AuthErrorContent() {
   const emailFromUrl = searchParams.get('email') || '';
   const error = searchParams.get('error');
 
-  const [email, setEmail] = useState(emailFromUrl);
+  // Try to get email from URL params or sessionStorage
+  const storedEmail = typeof window !== 'undefined' ? sessionStorage.getItem('auth-email') || '' : '';
+  const defaultEmail = emailFromUrl || storedEmail;
+
+  const [email, setEmail] = useState(defaultEmail);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   // Auto-show OTP input if we have an email from failed magic link
-  const [showOtpInput, setShowOtpInput] = useState(!!emailFromUrl);
+  const [showOtpInput, setShowOtpInput] = useState(!!defaultEmail);
   const router = useRouter();
 
   const supabase = createClient();
@@ -32,6 +36,9 @@ function AuthErrorContent() {
       });
 
       if (error) throw error;
+
+      // Clear stored email on success
+      sessionStorage.removeItem('auth-email');
 
       // Success! Redirect to dashboard
       router.push('/dashboard');
@@ -83,7 +90,7 @@ function AuthErrorContent() {
             </div>
           ) : (
             <>
-              {emailFromUrl && (
+              {defaultEmail && (
                 <div className="mb-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
                   <p className="text-sm text-blue-200">
                     The magic link didn't work, but you can enter the 6-digit code from your email instead.
@@ -102,10 +109,10 @@ function AuthErrorContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  disabled={loading || !!emailFromUrl}
+                  disabled={loading || !!defaultEmail}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 placeholder-gray-500"
                 />
-                {emailFromUrl && (
+                {defaultEmail && (
                   <p className="text-xs text-gray-500 mt-1">Email pre-filled from your login attempt</p>
                 )}
               </div>

@@ -21,6 +21,9 @@ export function DualAuth() {
     setMessage(null);
 
     try {
+      // Store email in sessionStorage so error page can access it
+      sessionStorage.setItem('auth-email', email);
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
