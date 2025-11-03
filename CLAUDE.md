@@ -37,18 +37,19 @@
 
 ---
 
-## Key Decision: Relational Schema ✅
+## Key Decision: Full JSONB Schema ✅
 
-**Decision Made:** Use proper relational design, NOT JSONB-heavy
+**Decision Made:** Use JSONB-heavy approach (like existing projects)
 
 **Rationale:**
-- Current approach (channels/journal) uses JSONB heavily → hard to query
-- Supabase AI now helps with schema design
-- Easier to navigate in Studio
-- Better for joins and complex queries
-- Cleaner RLS policies
+- Small scale (200 users max) → JSONB is plenty fast
+- Solo dev → speed > perfect structure
+- Infrequent querying → no need for complex optimization
+- Claude builds visualizations → don't need Supabase Studio
+- **Better for AI features** → JSON format is native for LLMs, embeddings, etc.
+- No migrations needed → iterate fast
 
-**See:** `SUPABASE_SCHEMA_REVISED.md` for full schema
+**See:** `SIMPLE_JSONB_SCHEMA.md` for full schema (3 tables, dead simple)
 
 ---
 
