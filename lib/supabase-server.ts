@@ -1,8 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 export async function createClient() {
   const cookieStore = await cookies()
+  const headersList = await headers()
+
+  // Determine cookie domain based on environment
+  const host = headersList.get('host') || '';
+  const isLocalhost = host.includes('localhost');
+  const isVercelPreview = host.includes('vercel.app');
+
+  // Use undefined for localhost/preview, otherwise set domain
+  const cookieDomain = isLocalhost || isVercelPreview ? undefined : '.recursive.eco';
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,13 +27,13 @@ export async function createClient() {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // Ensure cross-domain cookies for production
+              // Ensure correct domain for each environment
               const cookieOptions = {
                 ...options,
-                domain: '.recursive.eco',
+                domain: cookieDomain,
                 path: '/',
                 sameSite: 'lax' as const,
-                secure: true,
+                secure: isLocalhost ? false : true, // Allow non-HTTPS in local dev
               };
               cookieStore.set(name, value, cookieOptions);
             })

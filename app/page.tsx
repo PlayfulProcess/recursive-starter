@@ -17,8 +17,8 @@ export default function Home() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-gray-400">Loading...</div>
       </div>
     );
   }
@@ -28,14 +28,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4">
       <div className="max-w-4xl w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Recursive Creator
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-400">
             Story publisher • Playlist wrapper • Creator hub
           </p>
         </div>

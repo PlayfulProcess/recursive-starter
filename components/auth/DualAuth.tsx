@@ -105,19 +105,19 @@ export function DualAuth() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg shadow-xl">
       {/* Step 1: Enter Email */}
       {mode === 'email' && (
         <form onSubmit={handleSendOTP} className="space-y-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign In</h2>
-            <p className="text-gray-600 text-sm">
+            <h2 className="text-2xl font-bold text-white mb-2">Sign In</h2>
+            <p className="text-gray-400 text-sm">
               Enter your email to receive a magic link and verification code
             </p>
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
               Email address
             </label>
             <input
@@ -128,7 +128,7 @@ export function DualAuth() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 placeholder-gray-500"
             />
           </div>
 
@@ -136,8 +136,8 @@ export function DualAuth() {
             <div
               className={`p-3 rounded-lg text-sm ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-green-900/50 text-green-200 border border-green-700'
+                  : 'bg-red-900/50 text-red-200 border border-red-700'
               }`}
             >
               {message.text}
@@ -162,18 +162,18 @@ export function DualAuth() {
       {mode === 'verify' && (
         <form onSubmit={handleVerifyOTP} className="space-y-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
-            <p className="text-gray-600 text-sm mb-4">
-              We sent an email to <strong>{email}</strong>
+            <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
+            <p className="text-gray-400 text-sm mb-4">
+              We sent an email to <strong className="text-white">{email}</strong>
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-blue-800 mb-2"><strong>Option 1:</strong> Click the magic link in the email</p>
-              <p className="text-sm text-blue-800"><strong>Option 2:</strong> Enter the 6-digit code below</p>
+            <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-200 mb-2"><strong>Option 1:</strong> Click the magic link in the email</p>
+              <p className="text-sm text-blue-200"><strong>Option 2:</strong> Enter the 6-digit code below</p>
             </div>
           </div>
 
           <div>
-            <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="otp" className="block text-sm font-medium text-gray-300 mb-1">
               Enter 6-digit code
             </label>
             <input
@@ -184,7 +184,7 @@ export function DualAuth() {
               placeholder="123456"
               required
               disabled={loading}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 placeholder-gray-500"
               maxLength={6}
               pattern="\d{6}"
             />
@@ -194,8 +194,8 @@ export function DualAuth() {
             <div
               className={`p-3 rounded-lg text-sm ${
                 message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-green-900/50 text-green-200 border border-green-700'
+                  : 'bg-red-900/50 text-red-200 border border-red-700'
               }`}
             >
               {message.text}
@@ -218,7 +218,7 @@ export function DualAuth() {
                 setOtp('');
                 setMessage(null);
               }}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-400 hover:text-gray-200"
             >
               ← Change email
             </button>
@@ -226,7 +226,7 @@ export function DualAuth() {
               type="button"
               onClick={handleResend}
               disabled={loading}
-              className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
             >
               Resend code
             </button>

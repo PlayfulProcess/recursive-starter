@@ -1,26 +1,167 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase-client';
+
 export default function AuthError() {
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
+
+  const supabase = createClient();
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+      });
+
+      if (error) throw error;
+
+      // Success! Redirect to dashboard
+      router.push('/dashboard');
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text: error.message || 'Invalid code. Please check and try again.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4">
+      <div className="max-w-md w-full p-6 bg-gray-800 rounded-lg shadow-xl">
         <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="text-red-500 text-6xl mb-4">⚠</div>
+          <h1 className="text-2xl font-bold text-white mb-2">
             Authentication Failed
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-400 mb-6">
             We couldn't verify your login link. This could happen if:
           </p>
-          <ul className="text-left text-sm text-gray-600 space-y-2 mb-6">
+          <ul className="text-left text-sm text-gray-400 space-y-2 mb-6">
             <li>• The link has expired (links are valid for 1 hour)</li>
             <li>• The link was already used</li>
             <li>• The link was copied incorrectly</li>
           </ul>
-          <a
-            href="/"
-            className="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </a>
+
+          {/* Show OTP Input Option */}
+          {!showOtpInput ? (
+            <div className="space-y-3">
+              <p className="text-gray-300 text-sm mb-4">
+                If you received an email with a 6-digit code, you can try entering it below:
+              </p>
+              <button
+                onClick={() => setShowOtpInput(true)}
+                className="w-full bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors mb-2"
+              >
+                Enter 6-Digit Code
+              </button>
+              <a
+                href="/"
+                className="inline-block w-full bg-gray-700 text-white py-2 px-6 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+              >
+                Request New Link
+              </a>
+            </div>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1 text-left">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  disabled={loading}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 placeholder-gray-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-300 mb-1 text-left">
+                  Enter 6-digit code
+                </label>
+                <input
+                  id="otp"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  required
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 placeholder-gray-500"
+                  maxLength={6}
+                  pattern="\d{6}"
+                />
+              </div>
+
+              {message && (
+                <div
+                  className={`p-3 rounded-lg text-sm ${
+                    message.type === 'success'
+                      ? 'bg-green-900/50 text-green-200 border border-green-700'
+                      : 'bg-red-900/50 text-red-200 border border-red-700'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || otp.length !== 6}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'Verifying...' : 'Verify Code'}
+              </button>
+
+              <div className="flex justify-between text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOtpInput(false);
+                    setOtp('');
+                    setEmail('');
+                    setMessage(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-200"
+                >
+                  ← Back
+                </button>
+                <a
+                  href="/"
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  Request new code
+                </a>
+              </div>
+            </form>
+          )}
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+              <p className="text-sm text-red-200">Error: {error}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
