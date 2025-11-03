@@ -1,44 +1,65 @@
-import { createClient } from '@/lib/supabase-server';
-import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase-server'
+import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const token_hash = requestUrl.searchParams.get('token_hash');
-  const type = requestUrl.searchParams.get('type');
-  const next = requestUrl.searchParams.get('next') || '/dashboard';
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
+  const next = searchParams.get('next') ?? '/dashboard'
 
   console.log('🔐 Auth callback received:', {
+    code: code ? 'present' : 'missing',
     token_hash: token_hash ? 'present' : 'missing',
     type,
-    origin: requestUrl.origin,
-    fullUrl: requestUrl.href
+    origin,
+    fullUrl: request.url
   });
 
-  if (token_hash && type) {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase.auth.verifyOtp({
-      type: type as any,
+  // Handle magic link tokens (old flow)
+  if (token_hash && type === 'magiclink') {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.verifyOtp({
       token_hash,
-    });
+      type: 'magiclink',
+    })
+    if (!error) {
+      console.log('✅ Magic link auth successful');
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const isLocalEnv = process.env.NODE_ENV === 'development'
 
-    if (!error && data.user) {
-      console.log('✅ Auth successful for user:', data.user.email);
-      // Redirect to dashboard or specified next URL
-      return NextResponse.redirect(new URL(next, requestUrl.origin));
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${next}`)
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      } else {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
     }
-
-    console.error('❌ Auth verification failed:', error?.message || 'Unknown error');
-
-    // Pass error details to error page
-    const errorUrl = new URL('/auth/error', requestUrl.origin);
-    errorUrl.searchParams.set('error', error?.message || 'Authentication failed');
-    return NextResponse.redirect(errorUrl);
+    console.error('❌ Magic link verification failed:', error?.message);
   }
 
-  console.error('❌ Missing token_hash or type in callback');
-  // If verification failed, redirect to error page
-  const errorUrl = new URL('/auth/error', requestUrl.origin);
-  errorUrl.searchParams.set('error', 'Missing authentication parameters');
-  return NextResponse.redirect(errorUrl);
+  // Handle PKCE code exchange (new flow)
+  if (code) {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      console.log('✅ Code exchange successful');
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const isLocalEnv = process.env.NODE_ENV === 'development'
+
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${next}`)
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      } else {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+    }
+    console.error('❌ Code exchange failed:', error?.message);
+  }
+
+  console.error('❌ No valid auth parameters found');
+  // Return the user to an error page with instructions
+  return NextResponse.redirect(`${origin}/auth/error?error=Invalid or missing authentication parameters`)
 }
