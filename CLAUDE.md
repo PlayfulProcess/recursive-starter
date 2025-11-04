@@ -564,12 +564,6 @@ npx supabase db push
 
 ## Important Notes
 
-### Don't Do Without Asking:
-- ❌ Don't deploy to production
-- ❌ Don't push to git (user handles this)
-- ❌ Don't delete existing files
-- ❌ Don't modify other projects without permission
-- ❌ Don't add emojis unless requested
 
 ### Always Do:
 - ✅ Use TodoWrite for multi-step tasks

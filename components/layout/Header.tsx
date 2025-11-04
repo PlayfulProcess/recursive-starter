@@ -3,10 +3,18 @@
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 import Link from 'next/link';
+import { useAuth } from '@/components/AuthProvider';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const showAuthModal = () => {
+    if ((window as any).__openAuthModal) {
+      (window as any).__openAuthModal();
+    }
+  };
 
   useEffect(() => {
     // Initialize spiral after component mounts and script loads
@@ -118,16 +126,30 @@ export function Header() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <a
-                href="https://buy.stripe.com/fZu9AS2IZdeS58tfoa9ws00"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                Donate
-              </a>
+              {user ? (
+                <div className="hidden sm:flex items-center space-x-4">
+                  <Link
+                    href="/dashboard"
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Dashboard
+                  </Link>
+                  <span className="text-sm text-gray-600">Welcome, {user.email}</span>
+                  <button
+                    onClick={signOut}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={showAuthModal}
+                  className="hidden sm:inline-block text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Sign In
+                </button>
+              )}
 
               {/* Mobile menu button */}
               <button
@@ -172,13 +194,38 @@ export function Header() {
                 <a href="https://www.recursive.eco/pages/about.html" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                   About
                 </a>
-                <a
-                  href="https://buy.stripe.com/fZu9AS2IZdeS58tfoa9ws00"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-pink-500 to-purple-600 text-white text-center">
-                  ❤️ Donate
-                </a>
+
+                {/* Auth buttons in mobile menu */}
+                {user ? (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:text-blue-800 hover:bg-gray-50"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      showAuthModal();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Sign In
+                  </button>
+                )}
               </div>
             </div>
           )}
