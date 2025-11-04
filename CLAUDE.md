@@ -1,8 +1,8 @@
 # Context for Claude Code: Recursive Creator Project
 
-> **Last Updated:** 2025-11-03 (Session 4)
-> **Current Phase:** Phase 0 COMPLETE - Auth ACTUALLY Working ✅
-> **Next Session:** Test auth on production, then move to Phase 1 (features)
+> **Last Updated:** 2025-11-04 (Session 5)
+> **Current Phase:** Phase 0 COMPLETE - Auth Fully Working (All Email Providers) ✅
+> **Next Session:** Copy auth to other projects, then move to Phase 1 (features)
 
 ---
 
@@ -274,6 +274,124 @@ if (code) {
 5. System verifies OTP → redirects to dashboard
 
 **File:** `app/auth/error/page.tsx` - Now client component with state management
+
+---
+
+## Session 5 Updates: Corporate Email & Supabase Configuration
+
+### The Final Auth Issue: 403 Forbidden on OTP Verification
+
+**Problem:** After implementing dual auth, Gmail worked perfectly but corporate email (Pepsico/Outlook) failed with:
+```
+POST https://evixjvagwjmjdjpbazuj.supabase.co/auth/v1/verify 403 (Forbidden)
+```
+
+### Discovery Process:
+
+**Initial Theory: Outlook SafeLinks Breaking Auth**
+- Corporate emails wrap links in SafeLinks: `https://nam12.safelinks.protection.outlook.com/?url=...`
+- This breaks PKCE flow because code_verifier cookie gets lost through the redirect chain
+- ✅ This explained why magic links failed
+- ❌ But didn't explain why OTP also failed (OTP bypasses callbacks entirely!)
+
+**Key Insight: Testing on Multiple Devices**
+- Tried OTP on corporate computer → 403 error
+- Tried OTP on personal computer → **SAME 403 error!**
+- This ruled out corporate firewall/security as the cause
+
+**The Root Cause: Supabase "Confirm Email" Setting**
+
+When "Confirm Email" is ENABLED in Supabase:
+1. **First-time users** get "Confirm your signup" email (NO OTP code)
+2. Must click confirmation link to activate account
+3. **Only then** can use OTP for future logins
+4. If user exists but is UNCONFIRMED → OTP returns 403 Forbidden
+
+**What Was Happening:**
+- Gmail user: Already confirmed (from earlier testing) → OTP worked ✅
+- Pepsico user: Created while email confirmation was ON → stuck in unconfirmed state → OTP failed ❌
+
+### The Solution:
+
+**Step 1: Disable Email Confirmation**
+- Go to Supabase Dashboard → Authentication → Providers → Email
+- Set **"Enable email confirmation"** to **OFF**
+- Rationale: OTP already verifies email ownership, no need for separate confirmation
+
+**Step 2: Delete & Recreate Unconfirmed Users**
+- Users created BEFORE disabling confirmation are stuck with `email_confirmed_at: null`
+- Must delete these users from Supabase Dashboard → Authentication → Users
+- User signs up again → now works immediately with OTP
+
+### Critical Supabase Configuration for Dual Auth:
+
+**Authentication → Providers → Email:**
+- ✅ Enable email provider: **ON**
+- ✅ Confirm email: **OFF** (critical for OTP-only flow)
+
+**Authentication → URL Configuration:**
+- Site URL: `https://creator.recursive.eco`
+- Redirect URLs:
+  - `https://creator.recursive.eco/auth/callback`
+  - `https://*.vercel.app/auth/callback`
+  - `http://localhost:3001/auth/callback`
+
+**Email Templates → Magic Link:**
+Must include BOTH magic link AND OTP code:
+```html
+<h2>Sign in to Recursive.eco</h2>
+<p><strong>Option 1: Click to sign in</strong></p>
+<p><a href="{{ .ConfirmationURL }}">Sign in to Recursive.eco</a></p>
+
+<p><strong>Option 2: Enter this code</strong></p>
+<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: monospace;">
+  {{ .Token }}
+</p>
+```
+
+### Why Corporate Email Still Works with OTP:
+
+**Magic Link Flow (Broken by SafeLinks):**
+1. Supabase generates: `https://supabase.co/auth/v1/verify?token=pkce_...&redirect_to=creator.recursive.eco`
+2. Outlook wraps it: `https://safelinks.protection.outlook.com/?url=...`
+3. User clicks → goes through Outlook's server first
+4. PKCE code_verifier cookie lost in redirect chain
+5. Callback receives code but no verifier → fails ❌
+
+**OTP Flow (Works Perfectly):**
+1. User receives 6-digit code in email
+2. Types code directly in browser (on creator.recursive.eco)
+3. Browser → Supabase API directly (no redirects, no callbacks, no cookies needed)
+4. Supabase verifies code → creates session → success ✅
+
+### Debugging Added (Console Logs):
+
+Added comprehensive logging to help diagnose OTP issues:
+
+```typescript
+console.log('🔢 Attempting OTP verification:', { email, otpLength, otpValue })
+console.log('🔢 OTP verification response:', { success, error, hasSession })
+```
+
+**Files updated:**
+- `components/auth/DualAuth.tsx` - OTP verification with logging
+- `app/auth/error/page.tsx` - Error page OTP with logging
+
+### Testing Status:
+
+✅ **Gmail** - Magic link + OTP both work
+✅ **Corporate Email (Outlook/Pepsico)** - OTP works (magic link expected to fail)
+✅ **Dark mode** implemented across all auth pages
+✅ **Auto-prefilled email** on error page via sessionStorage
+✅ **PKCE + Magic Link** flows both supported in callback
+
+### Key Lessons Learned:
+
+1. **Supabase email confirmation MUST be disabled for OTP-only flows**
+2. **Corporate email SafeLinks break magic links** - OTP is the solution
+3. **403 errors often mean "user not confirmed"** not "wrong credentials"
+4. **Always check Supabase Dashboard → Users** to see confirmation status
+5. **Vercel logs show server-side (callbacks)**, **Browser console shows client-side (OTP)**
 
 ---
 

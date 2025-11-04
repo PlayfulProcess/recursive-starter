@@ -28,11 +28,24 @@ function AuthErrorContent() {
     setLoading(true);
     setMessage(null);
 
+    console.log('🔢 [Error Page] Attempting OTP verification:', {
+      email,
+      otpLength: otp.length,
+      otpValue: otp,
+    });
+
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { error, data } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'email',
+      });
+
+      console.log('🔢 [Error Page] OTP verification response:', {
+        success: !error,
+        error: error?.message,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
       });
 
       if (error) throw error;
@@ -41,8 +54,10 @@ function AuthErrorContent() {
       sessionStorage.removeItem('auth-email');
 
       // Success! Redirect to dashboard
+      console.log('✅ [Error Page] OTP verification successful, redirecting to dashboard');
       router.push('/dashboard');
     } catch (error: any) {
+      console.error('❌ [Error Page] OTP verification failed:', error);
       setMessage({
         type: 'error',
         text: error.message || 'Invalid code. Please check and try again.',

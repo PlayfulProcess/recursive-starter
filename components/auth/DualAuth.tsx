@@ -56,18 +56,33 @@ export function DualAuth() {
     setLoading(true);
     setMessage(null);
 
+    console.log('🔢 Attempting OTP verification:', {
+      email,
+      otpLength: otp.length,
+      otpValue: otp,
+    });
+
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { error, data } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'email',
       });
 
+      console.log('🔢 OTP verification response:', {
+        success: !error,
+        error: error?.message,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+      });
+
       if (error) throw error;
 
       // Success! User is now logged in
+      console.log('✅ OTP verification successful, redirecting to dashboard');
       window.location.href = '/dashboard';
     } catch (error: any) {
+      console.error('❌ OTP verification failed:', error);
       setMessage({
         type: 'error',
         text: error.message || 'Invalid code. Please check and try again.',
