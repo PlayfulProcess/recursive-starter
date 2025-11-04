@@ -23,7 +23,7 @@ export function Header() {
         const container = document.getElementById('header-logo-container');
         if (container) {
           (window as any).createSpiral(container, {
-            size: 100,
+            size: 90,
             turns: 6,
             color: '#9333ea',
             strokeWidth: 0.8,
@@ -52,7 +52,7 @@ export function Header() {
             const container = document.getElementById('header-logo-container');
             if (container) {
               (window as any).createSpiral(container, {
-                size: 100,
+                size: 90,
                 turns: 6,
                 color: '#9333ea',
                 strokeWidth: 0.8,
