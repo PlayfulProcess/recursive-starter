@@ -98,6 +98,24 @@ Replace the template with this:
 </p>
 ```
 
+(previous email without landingpage)
+<h2>Sign in to Recursive.eco</h2>
+
+<p>Hi there!</p>
+
+<p><strong>Option 1: Click to sign in</strong></p>
+<p><a href="{{ .ConfirmationURL }}">Sign in to Recursive.eco</a></p>
+
+<p><strong>Option 2: Enter this code</strong></p>
+<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: 
+  monospace;">
+  {{ .Token }}
+</p>
+
+<p>This code expires in 1 hour.</p>
+
+<p>If you didn't request this, you can safely ignore this email.</p>
+
 **Key changes:**
 1. Link goes to `/confirm-email` instead of Supabase directly
 2. Both confirmation URL and email are passed as parameters
