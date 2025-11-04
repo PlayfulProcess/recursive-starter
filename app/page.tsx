@@ -1,17 +1,20 @@
 'use client';
 
 import { useAuth } from '@/components/AuthProvider';
-import { DualAuth } from '@/components/auth/DualAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { PageModals } from '@/components/PageModals';
 
 export default function Home() {
   const { user, status } = useAuth();
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated' && user) {
       router.push('/dashboard');
+    } else if (status === 'unauthenticated') {
+      setShowAuthModal(true);
     }
   }, [status, user, router]);
 
@@ -28,28 +31,29 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4">
-      <div className="max-w-4xl w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Recursive Creator
-          </h1>
-          <p className="text-lg text-gray-400">
-            Story publisher • Playlist wrapper • Creator hub
-          </p>
-        </div>
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4">
+        <div className="max-w-4xl w-full">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Recursive Creator
+            </h1>
+            <p className="text-lg text-gray-400">
+              Story publisher • Playlist wrapper • Creator hub
+            </p>
+          </div>
 
-        {/* Auth Component */}
-        <DualAuth />
-
-        {/* Footer Info */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-500">
-            Part of the Recursive.eco ecosystem
-          </p>
+          {/* Footer Info */}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-500">
+              Part of the Recursive.eco ecosystem
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+
+      <PageModals />
+    </>
   );
 }
