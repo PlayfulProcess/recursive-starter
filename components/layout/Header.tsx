@@ -70,7 +70,7 @@ export function Header() {
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-2">
                 <Link href="/" className="flex items-center space-x-2">
-                  <div id="header-logo-container" className="h-20 w-20">
+                  <div id="header-logo-container" className="h-20 w-20 overflow-hidden">
                     {/* Animated spiral logo will be inserted here by JavaScript */}
                   </div>
                 </Link>

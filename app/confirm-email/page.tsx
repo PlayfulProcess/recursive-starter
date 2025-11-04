@@ -3,6 +3,32 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
+// Extract original URL from SafeLinks wrapper or encoded URL
+function extractOriginalUrl(maybeUrl: string): string | null {
+  try {
+    // If it's a Safe Links wrapper, pull the embedded url param
+    const parsed = new URL(maybeUrl);
+    if (parsed.hostname.endsWith('safelinks.protection.outlook.com')) {
+      const inner = parsed.searchParams.get('url');
+      return inner ? decodeURIComponent(inner) : null;
+    }
+    return maybeUrl;
+  } catch (e) {
+    // maybeUrl was encoded; try decode then parse
+    try {
+      const decoded = decodeURIComponent(maybeUrl);
+      const parsed2 = new URL(decoded);
+      if (parsed2.hostname.endsWith('safelinks.protection.outlook.com')) {
+        const inner = parsed2.searchParams.get('url');
+        return inner ? decodeURIComponent(inner) : null;
+      }
+      return decoded;
+    } catch (err) {
+      return null;
+    }
+  }
+}
+
 function ConfirmEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -11,8 +37,11 @@ function ConfirmEmailContent() {
   const [manualOtp, setManualOtp] = useState('');
   const [showOtpInput, setShowOtpInput] = useState(false);
 
-  const confirmationUrl = searchParams.get('confirmation_url');
+  const rawConfirmationUrl = searchParams.get('confirmation_url');
   const email = searchParams.get('email');
+
+  // Extract original URL (handles SafeLinks)
+  const confirmationUrl = rawConfirmationUrl ? extractOriginalUrl(rawConfirmationUrl) : null;
 
   useEffect(() => {
     // If no confirmation URL or email, show error
