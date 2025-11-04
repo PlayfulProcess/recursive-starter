@@ -8,6 +8,7 @@ export async function POST(request: Request) {
 
     console.log('🔐 Verification request:', {
       hasConfirmationUrl: !!confirmation_url,
+      confirmationUrlValue: confirmation_url,
       hasEmail: !!email,
       hasToken: !!token,
       type,
@@ -19,11 +20,16 @@ export async function POST(request: Request) {
     if (confirmation_url) {
       try {
         // Parse the confirmation URL to extract token_hash and type
+        console.log('🔗 Raw confirmation_url:', confirmation_url);
         const url = new URL(confirmation_url);
         const token_hash = url.searchParams.get('token_hash');
         const urlType = url.searchParams.get('type');
 
-        console.log('🔗 Extracted from URL:', { token_hash, urlType });
+        console.log('🔗 Extracted from URL:', {
+          token_hash: token_hash ? `${token_hash.substring(0, 10)}...` : null,
+          urlType,
+          allParams: Object.fromEntries(url.searchParams.entries())
+        });
 
         if (!token_hash || !urlType) {
           return NextResponse.json(
