@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/components/AuthProvider";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { AuthProvider, Header, Footer } from "@playful_process/components";
 
 export const metadata: Metadata = {
   title: "Recursive Creator",
