@@ -1,8 +1,8 @@
 # Context for Claude Code: Recursive Creator Project
 
-> **Last Updated:** 2025-11-04 (Session 5)
-> **Current Phase:** Phase 0 COMPLETE - Auth Fully Working (All Email Providers) ✅
-> **Next Session:** Copy auth to other projects, then move to Phase 1 (features)
+> **Last Updated:** 2025-11-09 (Session 6)
+> **Current Phase:** Phase 0 COMPLETE - Clean Starter Template Ready ✅
+> **Next Session:** Build iframe-based story upload tool (Phase 1)
 
 ---
 
@@ -86,18 +86,79 @@ recursive-creator/
 
 ## Architecture Decisions
 
-### 1. Hybrid Approach (React + Vanilla-Style Viewers)
+### 1. Iframe-Based Story Viewer (DECIDED 2025-11-09) ✅
 
-**Question Resolved:** "Does vanilla HTML have more creative freedom?"
+**Question:** Should we convert recursive-landing's story viewer to React or use iframe?
 
-**Answer:** No - it's mostly psychological. React can render identical HTML/CSS/JS.
+**Answer:** Use iframe! Much better approach.
+
+**Why:**
+- ✅ Users see EXACT final product while editing (WYSIWYG)
+- ✅ Zero conversion effort (vanilla JS → React is 4-6 hours work)
+- ✅ All features work perfectly: fullscreen, swipe, keyboard, wheel
+- ✅ Update viewer once, benefits both upload tool and public site
+- ✅ Less code to maintain
+- ✅ 100% reliable vs 10-20% chance direct copy would work
 
 **Solution:**
-- Use Next.js dynamic routes (for auth checks)
-- Render vanilla-style components (same UX as recursive-landing)
-- Best of both worlds: auth checks + creative freedom
+- **recursive-creator**: Upload tool with embedded iframe preview
+- **recursive-landing**: Keep existing beautiful viewer, add Supabase support
+- **Communication**: URL params (`?story_id=123&preview=true`)
 
-### 2. Private/Unlisted/Public Content
+### 2. Story Viewer Architecture
+
+**Upload Tool (recursive-creator/dashboard/stories/new):**
+```
+┌─────────────────────────────────────┐
+│ Story Upload Form                   │
+│ - Title                            │
+│ - Subtitle                         │
+│ - Upload images (drag & drop)      │
+│ - Reorder pages                    │
+│                                    │
+│ [Save Draft] [Preview] [Publish]   │
+└─────────────────────────────────────┘
+
+When clicking [Preview]:
+┌─────────────────────────────────────┐
+│ LIVE PREVIEW (iframe)               │
+│ ┌─────────────────────────────────┐ │
+│ │ https://recursive.eco/pages/    │ │
+│ │ stories/viewer.html              │ │
+│ │ ?story_id=123&preview=true       │ │
+│ │                                 │ │
+│ │ [Story loads from Supabase]     │ │
+│ └─────────────────────────────────┘ │
+│                                    │
+│ ← Back to Edit    [Publish Now]    │
+└─────────────────────────────────────┘
+```
+
+**Viewer (recursive-landing/pages/stories/viewer.html):**
+```javascript
+// Support both local files AND Supabase
+const storyId = urlParams.get('story_id');  // NEW: Supabase ID
+const storySlug = urlParams.get('story');   // Existing: local file
+const isPreview = urlParams.get('preview'); // NEW: draft mode
+
+if (storyId) {
+  // Fetch from Supabase
+  const { data } = await supabase
+    .from('stories')
+    .select('*, story_pages(*)')
+    .eq('id', storyId);
+
+  // If preview mode, check user owns it
+  if (isPreview) {
+    // Verify current user is owner
+  }
+} else if (storySlug) {
+  // Existing: fetch local JSON
+  const response = await fetch(`${storySlug}/story.json`);
+}
+```
+
+### 3. Private/Unlisted/Public Content
 
 **Requirement:** Users need to preview stories before publishing
 
@@ -120,34 +181,47 @@ recursive-creator/
 
 ## Current State
 
-### ✅ Completed (Phase 0):
+### ✅ Completed (Phase 0 - Clean Starter Template):
 - [x] Project planning documents created
 - [x] Architecture decisions finalized
-- [x] Schema design completed (relational)
-- [x] Auth strategy defined (dual: magic link + OTP)
-- [x] Portability plan documented
-- [x] Next.js 15 project initialized
-- [x] DualAuth component implemented
-- [x] **Environment-aware cookie configuration** (best practice)
-- [x] **Dark mode** implemented across all auth pages
-- [x] **OTP fallback** added to error page with sessionStorage email prefill
-- [x] **CRITICAL FIX:** Callback route now handles PKCE code exchange (was missing!)
-- [x] Supabase email template includes `{{ .Token }}` for OTP
-- [x] Callback route copied from working recursive-channels-fresh
-- [x] Auth should be fully functional (awaiting test)
+- [x] Next.js 15 project initialized with clean structure
+- [x] **Removed npm package dependency** (@playful_process/components)
+- [x] **All components now local**: Header, Footer, AuthProvider, DualAuth, PageModals
+- [x] **Updated DualAuth** with latest from recursive-channels-fresh
+  - Supports "Already have a code? Enter it here" direct OTP entry
+  - Three modes: email, verify, direct-verify
+- [x] **Removed spiral animation** from footer (now uses static SVG)
+- [x] **Updated logo** to match recursive-channels-fresh (clean SVG, no rotation)
+- [x] **Pushed to recursive-starter main** - Clean starter template ready
+- [x] **Merged dev to main** in recursive-creator
+- [x] **Iframe-based story architecture decided** (WYSIWYG preview)
+- [x] Auth fully working with dual auth (magic link + OTP)
+- [x] Build tested and passing ✅
 
-### 🔨 Next Steps (Immediate):
-- [ ] **TEST AUTH ON PRODUCTION** (https://creator.recursive.eco/)
-- [ ] Verify magic link works
-- [ ] Verify OTP code works on error page
-- [ ] If working, copy pattern to recursive-channels-fresh and jongu-tool-best-possible-self
-- [ ] Move to Phase 1: Story publisher features
+### 🔨 Next Steps (Phase 1 - Story Upload Tool):
+- [ ] **Create Supabase JSONB schema** for stories (SIMPLE_JSONB_SCHEMA.md)
+  - `stories` table (id, slug, story_data jsonb)
+  - `story_pages` table (story_id, page_number, page_data jsonb)
+  - Storage bucket 'story-images'
+  - RLS policies (JSONB-based)
+- [ ] **Update recursive-landing viewer** to support Supabase
+  - Add `?story_id=uuid` parameter support
+  - Add `?preview=true` mode for drafts
+  - Keep backward compatibility with `?story=slug` (local JSON files)
+  - Fetch from Supabase when story_id provided
+- [ ] **Build upload tool** in recursive-creator
+  - `/dashboard/stories/new` route
+  - Image upload with drag & drop to Supabase Storage
+  - Page reordering
+  - Iframe preview embedded in upload flow (shows recursive.eco viewer)
+  - Save draft / Publish workflow
+  - Updates story_data JSONB (title, subtitle, author, visibility, published)
+- [ ] **Test end-to-end** story creation and preview
 
 ### 📋 Future Phases:
-- [ ] Phase 1: Story publisher & viewer (weeks 2-4)
-- [ ] Phase 2: Playlist publisher & viewer (weeks 5-8)
-- [ ] Phase 3: Account hub (weeks 9-10)
-- [ ] Phase 4: Polish & deploy (weeks 11-12)
+- [ ] Phase 2: Playlist wrapper (YouTube playlist tool)
+- [ ] Phase 3: Account hub (unified dashboard)
+- [ ] Phase 4: Polish & deploy
 
 ---
 
@@ -166,14 +240,114 @@ recursive-creator/
 - `user_documents` - Generic user data (JSONB-heavy, keep as-is)
 - `newsletter_subscribers` - Email signups
 
-**New Tables (To Create):**
-- `stories` - Story metadata (relational design)
-- `story_pages` - Individual story pages
-- `playlists` - Playlist metadata (relational design)
-- `playlist_items` - Individual videos
-- `user_stars` - Cross-project starred content
+**New Tables (To Create for Phase 1):**
 
-**Schema Location:** `z.Supabase/schema_20251030.sql`
+Using **JSONB-heavy approach** for simplicity (see SIMPLE_JSONB_SCHEMA.md):
+
+```sql
+-- Stories (everything in JSONB)
+CREATE TABLE stories (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  slug text UNIQUE NOT NULL,
+  story_data jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_stories_creator ON stories ((story_data->>'creator_id'));
+CREATE INDEX idx_stories_visibility ON stories ((story_data->>'visibility'));
+
+-- Story pages (minimal structure)
+CREATE TABLE story_pages (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  story_id uuid REFERENCES stories(id) ON DELETE CASCADE,
+  page_number integer NOT NULL,
+  page_data jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(story_id, page_number)
+);
+
+-- RLS Policies
+ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE story_pages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view public published stories"
+  ON stories FOR SELECT
+  USING (
+    story_data->>'visibility' = 'public'
+    AND story_data->>'published' = 'true'
+  );
+
+CREATE POLICY "Users can view their own stories"
+  ON stories FOR SELECT
+  USING (story_data->>'creator_id' = auth.uid()::text);
+
+CREATE POLICY "Users can create stories"
+  ON stories FOR INSERT
+  WITH CHECK (story_data->>'creator_id' = auth.uid()::text);
+
+CREATE POLICY "Users can update their own stories"
+  ON stories FOR UPDATE
+  USING (story_data->>'creator_id' = auth.uid()::text);
+
+CREATE POLICY "Users can delete their own stories"
+  ON stories FOR DELETE
+  USING (story_data->>'creator_id' = auth.uid()::text);
+
+CREATE POLICY "Story pages visible to story viewers"
+  ON story_pages FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM stories
+      WHERE stories.id = story_pages.story_id
+      AND (
+        (story_data->>'visibility' = 'public' AND story_data->>'published' = 'true')
+        OR story_data->>'creator_id' = auth.uid()::text
+      )
+    )
+  );
+
+CREATE POLICY "Users can manage their story pages"
+  ON story_pages FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM stories
+      WHERE stories.id = story_pages.story_id
+      AND story_data->>'creator_id' = auth.uid()::text
+    )
+  );
+
+-- Storage bucket for story images
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('story-images', 'story-images', true)
+ON CONFLICT DO NOTHING;
+```
+
+**story_data structure:**
+```json
+{
+  "title": "The Nest Knows Best",
+  "subtitle": "For Little Ones Learning to Sleep",
+  "author": "PlayfulProcess",
+  "cover_image_url": "story-images/user-id/story-id/cover.png",
+  "visibility": "private",
+  "published": false,
+  "creator_id": "user-uuid-here"
+}
+```
+
+**page_data structure:**
+```json
+{
+  "image_url": "story-images/user-id/story-id/page-1.png",
+  "alt_text": "Bunny sitting under a tree",
+  "narration": "Once upon a time..."
+}
+```
+
+**Future Tables (Phase 2):**
+- `playlists` table (same JSONB approach)
+
+**Schema Location:** See `SIMPLE_JSONB_SCHEMA.md` for complete copy-paste ready schema
 
 ### Auth Setup
 
