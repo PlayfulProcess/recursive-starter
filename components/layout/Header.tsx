@@ -23,12 +23,11 @@ export function Header() {
             <div className="flex items-center space-x-8">
               <Link href="/" className="flex items-center space-x-2">
                 <Image
-                  src="/recursive-logo-1756153260128.png"
+                  src="/recursive-logo.svg"
                   alt="Recursive.eco"
                   width={60}
                   height={60}
                   className="h-12 w-auto"
-                  style={{ transform: 'rotate(200deg)' }}
                 />
               </Link>
 

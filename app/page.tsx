@@ -1,6 +1,7 @@
 'use client';
 
-import { useAuth, PageModals } from '@playful_process/components';
+import { useAuth } from '@/components/AuthProvider';
+import { PageModals } from '@/components/PageModals';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
