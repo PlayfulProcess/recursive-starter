@@ -1,8 +1,8 @@
 # Context for Claude Code: Recursive Creator Project
 
-> **Last Updated:** 2025-11-10 (Session 7)
-> **Current Phase:** Phase 1 STARTED - Story Approval Migration Ready ✅
-> **Next Session:** Run migration, build story upload forge
+> **Last Updated:** 2025-11-10 (Session 7 Continued)
+> **Current Phase:** Phase 1 IN PROGRESS - Story Upload Forge Built ✅
+> **Next Session:** Add iframe preview, build admin dashboard
 
 ---
 
@@ -308,40 +308,59 @@ If no → simplify the forge.
   - Audit trail system
   - Unified content visibility
   - 10 optimization opportunities with priority levels
+- [x] **Migration RUN** - User ran migration and bootstrapped admin user (pp@playfulprocess.com)
+  - story-images storage bucket created
+  - RLS policies active
+  - is_admin_user() function working
 
-### 🔨 Next Steps (Phase 1 - Forge the Story Creation Tool):
+### ✅ Completed (Phase 1 - Story Upload Forge):
+- [x] **Built story creation page** - `/dashboard/stories/new` (3.9 kB)
+  - Title, subtitle, author name fields
+  - Dark mode UI (bg-gray-900, bg-gray-800)
+  - Form validation and error handling
+  - Success states with auto-redirect
+- [x] **Image upload functionality**
+  - Multiple image selection with file picker
+  - Client-side image preview with object URLs
+  - File type validation (images only)
+  - Upload to Supabase Storage (`story-images/{user_id}/{doc_id}/page-X.ext`)
+  - Public URL generation for stored images
+- [x] **Page management**
+  - Reorder pages with up/down arrows
+  - Remove pages with confirmation
+  - Alt text input for accessibility
+  - Narration textarea for each page
+  - Real-time preview thumbnails (24x24)
+- [x] **Save flow**
+  - Creates story document in `user_documents` table
+  - Uploads images to storage
+  - Updates document with pages array
+  - Sets `is_active: 'false'` (pending approval)
+  - Sets `reviewed: 'false'`
+- [x] **Dashboard navigation**
+  - Added "Create New Story" button on `/dashboard`
+  - Links to story creation page
+  - "My Stories" section for future list
+- [x] **Build tested and passing** ✅
+- [x] **Pushed to GitHub** (commits 846e6ac, f9f2364)
 
-**Goal:** Enable ANYONE (especially parents) to create beautiful children's stories and publish to the collective.
+### 🔨 Next Steps (Phase 1 - Complete the Forge):
 
-**The Forge Architecture:**
-- Simple form (title, subtitle, author name)
-- Drag & drop images (low barrier to entry)
-- Live iframe preview (see the beauty immediately)
-- Submission → Admin approval → Publish to Kids Stories channel
-- Donations-only model (no paywalls, gateway building)
+**What's Working Now:**
+✅ Story creation form with title, subtitle, author
+✅ Multiple image upload with previews
+✅ Page reordering and removal
+✅ Alt text and narration fields
+✅ Save to Supabase (user_documents + storage)
+✅ Dashboard navigation
 
-**Implementation:**
+**What's Left:**
 
-✅ **Migration ready to run** - REVISED to match tools/channels pattern
-
-**Next immediate steps:**
-
-- [ ] **Run the revised migration** in Supabase SQL Editor
-  - Use: `001-story-approval-revised.sql` (NOT the original)
-  - Safe to run multiple times (idempotent)
-  - See `supabase/migrations/README-REVISED.md` for guide
-
-- [ ] **Bootstrap admin user**
-  ```sql
-  UPDATE profiles
-  SET profile_data = jsonb_set(profile_data, '{is_admin}', 'true'::jsonb, true)
-  WHERE email = 'your-email@example.com';
-  ```
-
-- [ ] **Create storage bucket** for story images
-  - Bucket name: `story-images`
-  - Path pattern: `story-images/{user_id}/{doc_id}/filename.png`
-  - Public read, authenticated write
+- [ ] **Add iframe preview to story creation page**
+  - Embed recursive-landing viewer in creation UI
+  - Show live preview as creator adds pages
+  - WYSIWYG experience (see exactly what will be published)
+  - Update preview when pages are reordered/edited
 
 - [ ] **Update recursive-landing viewer** to support Supabase
   - Add `?story_id=uuid` parameter support
@@ -350,25 +369,28 @@ If no → simplify the forge.
   - Fetch from Supabase when story_id provided
   - Beautiful experience (gods deserve beauty)
 
-- [ ] **Build the forge** in recursive-creator (`/dashboard/stories/new`)
-  - Simple form: title, subtitle, author
-  - **Drag & drop images** - mortals can wield this tool
-  - **Page reordering** - intuitive, no technical knowledge needed
-  - **Iframe preview embedded** - shows recursive.eco viewer in real-time (WYSIWYG)
-  - **Save draft / Submit for approval** workflow
-  - Stores in user_documents with document_type='story'
-  - Sets approval_status='pending' on submission
+- [ ] **Add "My Stories" list to dashboard**
+  - Query user's stories from user_documents
+  - Show title, status (draft/pending/approved), created date
+  - Link to edit story
+  - Link to preview story
+  - Delete story option
 
 - [ ] **Build admin dashboard** (`/admin/stories`)
-  - List pending stories
+  - Check if current user is admin (is_admin_user())
+  - List pending stories (is_active='false', reviewed='false')
   - Preview in iframe (same viewer as public)
   - Approve/Reject buttons
-  - Calls Edge Function to update approval_status
+  - Show story metadata (title, author, created date)
 
 - [ ] **Create Edge Function** for approval actions
   - Route: `supabase/functions/approve-story/`
   - Validates admin JWT
-  - Updates approval_status, reviewer_id, reviewed_at
+  - Updates approval fields in document_data:
+    - `is_active: 'true'` (for approve)
+    - `reviewed: 'true'`
+    - `approved_at: now()`
+    - `approved_by: 'admin'`
   - Returns success/error
 
 - [ ] **Test with non-technical creators** - parents, not devs
@@ -1004,11 +1026,13 @@ npx supabase db push
 
 ---
 
-## Current Session Context (Session 7)
+## Current Session Context (Session 7 - Continued)
 
 **Date:** 2025-11-10
-**Focus:** Create story approval migration + PIVOT to match existing pattern
-**Accomplishments:**
+**Focus Part 1:** Create story approval migration + PIVOT to match existing pattern
+**Focus Part 2:** Build story upload forge with image management
+
+**Accomplishments (Migration):**
 - ✅ Reviewed Supabase AI recommendations
 - ✅ Created initial migration (001-story-approval.sql)
 - ✅ **DISCOVERED:** Tools/channels already have approval pattern!
@@ -1018,7 +1042,21 @@ npx supabase db push
 - ✅ Created RECOMMENDATION-REVISED.md (explains the pivot)
 - ✅ Created revised guide (README-REVISED.md)
 - ✅ Created BACKLOG_DB_OPTIMIZATIONS.md (future improvements)
+- ✅ User RAN migration + bootstrapped admin (pp@playfulprocess.com)
+
+**Accomplishments (Story Upload Forge):**
+- ✅ Built `/dashboard/stories/new` page (3.9 kB)
+- ✅ Title, subtitle, author form fields
+- ✅ Multiple image upload with file picker
+- ✅ Image preview thumbnails (24x24)
+- ✅ Page reordering (up/down arrows)
+- ✅ Page removal
+- ✅ Alt text and narration inputs for each page
+- ✅ Upload images to Supabase Storage (`story-images/{user_id}/{doc_id}/`)
+- ✅ Save to user_documents with `is_active: 'false'` (pending)
+- ✅ Dashboard navigation with "Create New Story" button
 - ✅ Build tested and passing
+- ✅ Pushed to GitHub (commits 846e6ac, f9f2364)
 
 **Key Learning:**
 - Supabase AI gave generic best practices (columns-based approval)
@@ -1026,12 +1064,14 @@ npx supabase db push
 - Revised to be consistent with tools/channels
 - **Domain knowledge > generic advice**
 
-**What User Needs to Do Next:**
-1. **Run REVISED migration** (001-story-approval-revised.sql, not the original!)
-2. **Bootstrap admin user** (UPDATE profiles SET profile_data...)
-3. **Test RLS policies** with dummy story
-4. **Begin building story upload forge** (dashboard/stories/new)
-5. **Build admin approval UI** (admin/stories)
+**What User Can Do Now:**
+1. ✅ **Test story creation** at https://creator.recursive.eco/dashboard/stories/new
+   - Create a test story with images
+   - Verify images upload to Supabase Storage
+   - Check story appears in user_documents table
+2. **Next:** Add iframe preview to creation page (WYSIWYG experience)
+3. **Next:** Build "My Stories" list on dashboard
+4. **Next:** Build admin approval dashboard (/admin/stories)
 
 **Supabase Email Template (Magic Link + OTP):**
 
