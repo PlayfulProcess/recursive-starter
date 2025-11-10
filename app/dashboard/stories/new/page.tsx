@@ -1,9 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
+
+interface Page {
+  id: string;
+  page_number: number;
+  image_url: string;
+  image_file?: File;
+  alt_text: string;
+  narration: string;
+}
 
 export default function NewStoryPage() {
   const { user, status } = useAuth();
@@ -13,9 +22,12 @@ export default function NewStoryPage() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [author, setAuthor] = useState('');
+  const [pages, setPages] = useState<Page[]>([]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (status === 'loading') {
     return (
@@ -30,6 +42,114 @@ export default function NewStoryPage() {
     return null;
   }
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    setError(null);
+
+    try {
+      const newPages: Page[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`File ${file.name} is not an image`);
+        }
+
+        // Create temporary object URL for preview
+        const objectUrl = URL.createObjectURL(file);
+
+        newPages.push({
+          id: `temp-${Date.now()}-${i}`,
+          page_number: pages.length + i + 1,
+          image_url: objectUrl,
+          image_file: file,
+          alt_text: '',
+          narration: ''
+        });
+      }
+
+      setPages([...pages, ...newPages]);
+    } catch (err) {
+      console.error('Error adding images:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add images');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemovePage = (pageId: string) => {
+    setPages(pages.filter(p => p.id !== pageId));
+  };
+
+  const handleMovePage = (pageId: string, direction: 'up' | 'down') => {
+    const index = pages.findIndex(p => p.id === pageId);
+    if (index === -1) return;
+
+    if (direction === 'up' && index > 0) {
+      const newPages = [...pages];
+      [newPages[index - 1], newPages[index]] = [newPages[index], newPages[index - 1]];
+      setPages(newPages);
+    } else if (direction === 'down' && index < pages.length - 1) {
+      const newPages = [...pages];
+      [newPages[index], newPages[index + 1]] = [newPages[index + 1], newPages[index]];
+      setPages(newPages);
+    }
+  };
+
+  const handleUpdatePage = (pageId: string, field: 'alt_text' | 'narration', value: string) => {
+    setPages(pages.map(p =>
+      p.id === pageId ? { ...p, [field]: value } : p
+    ));
+  };
+
+  const uploadImagesToStorage = async (storyId: string) => {
+    const uploadedPages = [];
+
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+
+      if (!page.image_file) continue;
+
+      // Upload to Supabase Storage
+      const fileExt = page.image_file.name.split('.').pop();
+      const fileName = `page-${i + 1}.${fileExt}`;
+      const filePath = `${user!.id}/${storyId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('story-images')
+        .upload(filePath, page.image_file, {
+          upsert: true
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload ${fileName}: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('story-images')
+        .getPublicUrl(filePath);
+
+      uploadedPages.push({
+        page_number: i + 1,
+        image_url: publicUrl,
+        alt_text: page.alt_text || `Page ${i + 1}`,
+        narration: page.narration || ''
+      });
+    }
+
+    return uploadedPages;
+  };
+
   const handleSaveDraft = async () => {
     if (!title.trim()) {
       setError('Title is required');
@@ -40,12 +160,15 @@ export default function NewStoryPage() {
     setError(null);
 
     try {
-      const { data, error: insertError } = await supabase
+      // First, create the story document
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      const { data: storyData, error: insertError } = await supabase
         .from('user_documents')
         .insert({
           user_id: user.id,
           document_type: 'story',
-          story_slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+          story_slug: slug,
           document_data: {
             title: title.trim(),
             subtitle: subtitle.trim(),
@@ -53,13 +176,33 @@ export default function NewStoryPage() {
             is_active: 'false',  // String! (consistent with tools)
             reviewed: 'false',
             creator_id: user.id,
-            pages: []  // Will add pages later
+            pages: []  // Will update after uploading images
           }
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
+      if (!storyData) throw new Error('Failed to create story');
+
+      // Upload images and get page data
+      let uploadedPages = [];
+      if (pages.length > 0) {
+        uploadedPages = await uploadImagesToStorage(storyData.id);
+
+        // Update the story with page data
+        const { error: updateError } = await supabase
+          .from('user_documents')
+          .update({
+            document_data: {
+              ...storyData.document_data,
+              pages: uploadedPages
+            }
+          })
+          .eq('id', storyData.id);
+
+        if (updateError) throw updateError;
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -161,11 +304,128 @@ export default function NewStoryPage() {
               />
             </div>
 
+            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Story Pages
+              </label>
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={saving || uploading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={saving || uploading}
+                    className="w-full px-4 py-3 bg-gray-700 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:bg-gray-600 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {uploading ? 'Processing images...' : '+ Add Images'}
+                  </button>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Click to select one or more images. You can reorder them after uploading.
+                  </p>
+                </div>
+
+                {/* Page List */}
+                {pages.length > 0 && (
+                  <div className="space-y-3">
+                    {pages.map((page, index) => (
+                      <div
+                        key={page.id}
+                        className="bg-gray-700 rounded-lg p-4 border border-gray-600"
+                      >
+                        <div className="flex gap-4">
+                          {/* Image Preview */}
+                          <div className="flex-shrink-0">
+                            <img
+                              src={page.image_url}
+                              alt={`Page ${index + 1} preview`}
+                              className="w-24 h-24 object-cover rounded"
+                            />
+                          </div>
+
+                          {/* Page Details */}
+                          <div className="flex-grow space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-white">
+                                Page {index + 1}
+                              </span>
+                              <div className="flex gap-1">
+                                {/* Move Up */}
+                                {index > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMovePage(page.id, 'up')}
+                                    className="p-1 text-gray-400 hover:text-white"
+                                    title="Move up"
+                                  >
+                                    ↑
+                                  </button>
+                                )}
+                                {/* Move Down */}
+                                {index < pages.length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMovePage(page.id, 'down')}
+                                    className="p-1 text-gray-400 hover:text-white"
+                                    title="Move down"
+                                  >
+                                    ↓
+                                  </button>
+                                )}
+                                {/* Remove */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemovePage(page.id)}
+                                  className="p-1 text-red-400 hover:text-red-300"
+                                  title="Remove page"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Alt Text */}
+                            <input
+                              type="text"
+                              placeholder="Image description (optional)"
+                              value={page.alt_text}
+                              onChange={(e) => handleUpdatePage(page.id, 'alt_text', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              disabled={saving}
+                            />
+
+                            {/* Narration */}
+                            <textarea
+                              placeholder="Page narration (optional)"
+                              value={page.narration}
+                              onChange={(e) => handleUpdatePage(page.id, 'narration', e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                              disabled={saving}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Info Box */}
             <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
               <p className="text-sm text-blue-200">
-                <strong>Next steps:</strong> After saving this draft, you'll be able to upload images and arrange pages.
-                For now, we're building the basic story metadata.
+                <strong>How it works:</strong> Add your story details above, then upload images to create pages.
+                You can reorder pages and add descriptions or narration. When you're ready, save your draft for later or submit for approval.
               </p>
             </div>
 
