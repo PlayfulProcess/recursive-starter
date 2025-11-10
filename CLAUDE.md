@@ -275,27 +275,39 @@ If no → simplify the forge.
 - [x] **Consulted Supabase AI** about approval workflow design
   - Documented in: `supabase-ai-prompt.md`
   - Received comprehensive migration SQL + recommendations
-- [x] **Created RECOMMENDATION.md** - Implementation plan based on Supabase AI
-  - Edge Functions approach (not DB triggers)
-  - Hybrid columns + JSONB design
-  - Step-by-step guide for proceeding
+- [x] **PIVOTED:** Discovered existing tools/channels pattern
+  - Tools/channels use JSONB-heavy approach: `is_active` controls visibility
+  - Original Supabase AI proposal was over-engineered (didn't know our codebase)
+  - Revised to match existing pattern exactly
+- [x] **Created APPROVAL_PATTERN.md** - Documents the Recursive.eco approval pattern
+  - How tools/channels handle approval (JSONB-heavy, simple)
+  - Why stories should follow the same pattern
+  - Data structure, queries, RLS policies
+  - Comparison of approaches
+- [x] **Created revised migration SQL** - `supabase/migrations/001-story-approval-revised.sql`
+  - Adds 'story' to document_type
+  - Optional story_slug column for fast lookups
+  - Everything in document_data JSONB (consistent with tools)
+  - Uses `is_active: "false"` (pending) → `is_active: "true"` (public)
+  - Creates indexes for fast JSONB queries
+  - Creates is_admin_user() helper function
+  - Adds RLS policies (owner, admin, public)
+  - Creates story-images storage bucket
+- [x] **Created RECOMMENDATION-REVISED.md** - Why the revision is better
+  - Explains the pivot from columns to JSONB
+  - Compares original vs revised approaches
+  - Shows why consistency with existing code > generic best practices
+- [x] **Created revised migration guide** - `supabase/migrations/README-REVISED.md`
+  - Step-by-step instructions for running migration
+  - Admin bootstrap SQL
+  - Test queries for verification
+  - Approval/rejection workflows
+  - Troubleshooting guide
 - [x] **Created BACKLOG_DB_OPTIMIZATIONS.md** - Future improvements
   - Generic approval system
   - Audit trail system
   - Unified content visibility
   - 10 optimization opportunities with priority levels
-- [x] **Created migration SQL** - `supabase/migrations/001-story-approval.sql`
-  - Adds 'story' to document_type
-  - Adds approval workflow columns (approval_status, published, visibility, etc.)
-  - Creates indexes for fast queries
-  - Creates is_admin_user() helper function
-  - Adds RLS policies (owner, admin, public)
-  - Story reviews audit table (commented out for later)
-- [x] **Created migration guide** - `supabase/migrations/README.md`
-  - Step-by-step instructions for running migration
-  - Admin bootstrap SQL
-  - Test queries for verification
-  - Troubleshooting guide
 
 ### 🔨 Next Steps (Phase 1 - Forge the Story Creation Tool):
 
@@ -310,14 +322,14 @@ If no → simplify the forge.
 
 **Implementation:**
 
-✅ **Migration ready to run** - All SQL prepared in `supabase/migrations/`
+✅ **Migration ready to run** - REVISED to match tools/channels pattern
 
 **Next immediate steps:**
 
-- [ ] **Run the migration** in Supabase SQL Editor
-  - Copy/paste `001-story-approval.sql`
+- [ ] **Run the revised migration** in Supabase SQL Editor
+  - Use: `001-story-approval-revised.sql` (NOT the original)
   - Safe to run multiple times (idempotent)
-  - See `supabase/migrations/README.md` for guide
+  - See `supabase/migrations/README-REVISED.md` for guide
 
 - [ ] **Bootstrap admin user**
   ```sql
@@ -798,14 +810,16 @@ console.log('🔢 OTP verification response:', { success, error, hasSession })
 ### Planning Documents (Read These First):
 1. **PROJECT_PLAN.md** - Master plan, all phases, timeline
 2. **AUTH_IMPLEMENTATION_PLAN.md** - Complete auth code + guide
-3. **RECOMMENDATION.md** - Story approval implementation plan (Supabase AI recommendations)
-4. **supabase-ai-prompt.md** - Full Supabase AI consultation about approval workflow
-5. **SUPABASE_SCHEMA_REVISED.md** - Database design (relational - older approach)
-6. **AUTH_PORTABILITY.md** - How to copy to other projects
+3. **APPROVAL_PATTERN.md** - ⭐ The Recursive.eco approval pattern (READ THIS!)
+4. **RECOMMENDATION-REVISED.md** - Why we revised from Supabase AI's approach
+5. **supabase-ai-prompt.md** - Full Supabase AI consultation (reference only)
+6. **AUTH_PORTABILITY.md** - How to copy auth to other projects
 
 ### Migration Files (Ready to Run):
-1. **supabase/migrations/001-story-approval.sql** - Complete migration SQL
-2. **supabase/migrations/README.md** - Step-by-step guide for running migration
+1. **supabase/migrations/001-story-approval-revised.sql** - ⭐ USE THIS (revised)
+2. **supabase/migrations/README-REVISED.md** - ⭐ Step-by-step guide (revised)
+3. ~~001-story-approval.sql~~ - Original (deprecated, don't use)
+4. ~~README.md~~ - Original guide (deprecated, don't use)
 
 ### Optimization Documentation:
 1. **z.Supabase/BACKLOG_DB_OPTIMIZATIONS.md** - Future improvements (don't over-engineer!)
@@ -993,17 +1007,27 @@ npx supabase db push
 ## Current Session Context (Session 7)
 
 **Date:** 2025-11-10
-**Focus:** Create story approval migration + documentation
+**Focus:** Create story approval migration + PIVOT to match existing pattern
 **Accomplishments:**
 - ✅ Reviewed Supabase AI recommendations
-- ✅ Created RECOMMENDATION.md (implementation plan)
+- ✅ Created initial migration (001-story-approval.sql)
+- ✅ **DISCOVERED:** Tools/channels already have approval pattern!
+- ✅ **PIVOTED:** Revised migration to match existing JSONB-heavy approach
+- ✅ Created APPROVAL_PATTERN.md (documents the Recursive.eco way)
+- ✅ Created revised migration (001-story-approval-revised.sql)
+- ✅ Created RECOMMENDATION-REVISED.md (explains the pivot)
+- ✅ Created revised guide (README-REVISED.md)
 - ✅ Created BACKLOG_DB_OPTIMIZATIONS.md (future improvements)
-- ✅ Created migration SQL file (001-story-approval.sql)
-- ✅ Created migration guide (README.md)
 - ✅ Build tested and passing
 
+**Key Learning:**
+- Supabase AI gave generic best practices (columns-based approval)
+- But our codebase uses JSONB-heavy pattern (is_active controls visibility)
+- Revised to be consistent with tools/channels
+- **Domain knowledge > generic advice**
+
 **What User Needs to Do Next:**
-1. **Run migration in Supabase SQL Editor** (copy/paste 001-story-approval.sql)
+1. **Run REVISED migration** (001-story-approval-revised.sql, not the original!)
 2. **Bootstrap admin user** (UPDATE profiles SET profile_data...)
 3. **Test RLS policies** with dummy story
 4. **Begin building story upload forge** (dashboard/stories/new)
