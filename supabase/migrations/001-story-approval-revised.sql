@@ -36,6 +36,12 @@ CREATE INDEX IF NOT EXISTS idx_user_documents_story_slug
   ON public.user_documents (story_slug)
   WHERE document_type = 'story';
 
+-- 3b) Add unique constraint on story_slug (prevents duplicate URLs)
+-- Based on Supabase AI review recommendation
+CREATE UNIQUE INDEX IF NOT EXISTS uq_user_documents_story_slug
+  ON public.user_documents (story_slug)
+  WHERE document_type = 'story' AND story_slug IS NOT NULL;
+
 -- 4) Create indexes for fast queries on JSONB fields
 -- Find pending stories (for admin dashboard)
 CREATE INDEX IF NOT EXISTS idx_user_documents_story_pending
