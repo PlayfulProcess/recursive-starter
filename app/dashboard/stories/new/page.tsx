@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
@@ -12,7 +12,12 @@ interface Page {
   image_file?: File;
 }
 
-export default function NewStoryPage() {
+interface UploadedPage {
+  page_number: number;
+  image_url: string;
+}
+
+function NewStoryPageContent() {
   const { user, status } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,8 +180,8 @@ export default function NewStoryPage() {
     setDraggedIndex(null);
   };
 
-  const uploadImagesToStorage = async (storyId: string) => {
-    const uploadedPages = [];
+  const uploadImagesToStorage = async (storyId: string): Promise<UploadedPage[]> => {
+    const uploadedPages: UploadedPage[] = [];
 
     for (let i = 0; i < pages.length; i++) {
       const page = pages[i];
@@ -229,7 +234,7 @@ export default function NewStoryPage() {
       if (isEditing) {
         // UPDATE existing story
         // Upload images and get page data
-        let uploadedPages = [];
+        let uploadedPages: UploadedPage[] = [];
         if (pages.length > 0) {
           uploadedPages = await uploadImagesToStorage(currentStoryId!);
         }
@@ -280,9 +285,9 @@ export default function NewStoryPage() {
         currentStoryId = storyData.id;
 
         // Upload images and get page data
-        let uploadedPages = [];
+        let uploadedPages: UploadedPage[] = [];
         if (pages.length > 0) {
-          uploadedPages = await uploadImagesToStorage(currentStoryId);
+          uploadedPages = await uploadImagesToStorage(currentStoryId!);
 
           // Update the story with page data
           const { error: updateError } = await supabase
@@ -539,5 +544,17 @@ export default function NewStoryPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function NewStoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    }>
+      <NewStoryPageContent />
+    </Suspense>
   );
 }
