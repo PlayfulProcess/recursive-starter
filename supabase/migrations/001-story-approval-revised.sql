@@ -9,6 +9,46 @@
 --
 -- This is the Recursive.eco way: JSONB-heavy, simple, consistent.
 -- ============================================
+--
+-- IMPORTANT: BEFORE RUNNING THIS MIGRATION
+-- ============================================
+-- 1. Check existing RLS policies on user_documents:
+--    SELECT policyname, cmd, qual, with_check
+--    FROM pg_policies
+--    WHERE schemaname = 'public' AND tablename = 'user_documents';
+--
+--    Look for overly broad UPDATE policies that might conflict.
+--
+-- 2. These new story-scoped policies will be ORed with existing ones.
+--    If you find conflicts, add document_type != 'story' to old policies.
+--
+-- ============================================
+-- DECISIONS MADE (Supabase AI Review Nov 2025)
+-- ============================================
+-- ✅ KEEP string booleans ("true"/"false" not true/false)
+--    - Reason: Consistent with existing tools/channels
+--    - Existing tools use: "is_active": "true" (strings)
+--    - At 200 user scale, performance difference negligible
+--
+-- ✅ ADD unique constraint on story_slug (line 41)
+--    - Reason: Prevents duplicate URLs
+--    - Supabase AI recommendation implemented
+--
+-- ❌ DON'T ADD boolean columns (published, is_active, etc.)
+--    - Reason: Keep JSONB approach (consistent with tools)
+--    - Can add later if queries become slow (>1000 users)
+--
+-- ❌ DON'T ADD reviewer columns (reviewed_by, reviewed_at)
+--    - Reason: Keep in JSONB (consistent with tools)
+--    - Can add later if need to query by reviewer
+--
+-- ⏳ IMPLEMENT LATER: Edge Function for approval actions
+--    - Reason: Security (prevent owners from changing is_active)
+--    - Admin UI should call Edge Function, not direct SQL
+--    - Edge Function uses service_role to update approval fields
+--
+-- See: SUPABASE_AI_REVIEW_ANALYSIS.md for full details
+-- ============================================
 
 -- 1) Add 'story' to document_type check constraint
 ALTER TABLE IF EXISTS public.user_documents
@@ -254,6 +294,26 @@ END$$;
 
 -- ============================================
 -- DONE! Simple, consistent with tools/channels
+-- ============================================
+--
+-- AFTER RUNNING THIS MIGRATION:
+-- ============================================
+-- 1. Bootstrap admin user:
+--    UPDATE profiles
+--    SET profile_data = jsonb_set(profile_data, '{is_admin}', 'true'::jsonb, true)
+--    WHERE email = 'your-email@example.com';
+--
+-- 2. Verify admin status:
+--    SELECT email, profile_data->>'is_admin' as is_admin
+--    FROM profiles WHERE email = 'your-email@example.com';
+--
+-- 3. Test with dummy story (see examples below)
+--
+-- 4. Build Edge Function for approval actions (security)
+--
+-- 5. Build admin dashboard with visual preview (iframe)
+--
+-- See: README-REVISED.md for step-by-step guide
 -- ============================================
 
 /*
