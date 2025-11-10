@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase-client';
 interface Story {
   id: string;
   tool_slug: string;
+  story_slug: string;
   document_data: {
     title: string;
     subtitle?: string;
@@ -47,6 +48,7 @@ export default function DashboardPage() {
         .from('user_documents')
         .select('*')
         .eq('user_id', user.id)
+        .eq('tool_slug', 'story')  // Filter by tool_slug first (indexed)
         .eq('document_type', 'story')
         .order('created_at', { ascending: false });
 

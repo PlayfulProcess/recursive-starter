@@ -183,7 +183,8 @@ export default function NewStoryPage() {
         .insert({
           user_id: user.id,
           document_type: 'story',
-          tool_slug: slug,
+          tool_slug: 'story',  // Constant for all stories (for filtering)
+          story_slug: slug,    // Unique slug for this specific story (for retrieval)
           document_data: {
             title: title.trim(),
             subtitle: subtitle.trim(),
