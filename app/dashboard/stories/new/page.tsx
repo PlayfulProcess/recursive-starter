@@ -92,9 +92,27 @@ function NewStoryPageContent() {
     setPages(newPages);
   };
 
+  const convertGoogleDriveUrl = (url: string): string => {
+    // Detect and convert Google Drive URLs to direct image URLs
+    const drivePatterns = [
+      /drive\.google\.com\/file\/d\/([^\/]+)/,  // /file/d/FILE_ID/view
+      /drive\.google\.com\/open\?id=([^&]+)/,   // /open?id=FILE_ID
+    ];
+
+    for (const pattern of drivePatterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      }
+    }
+
+    return url; // Return original if not a Drive URL
+  };
+
   const handlePageUrlChange = (index: number, url: string) => {
     const newPages = [...pages];
-    newPages[index].image_url = url;
+    // Auto-convert Google Drive URLs
+    newPages[index].image_url = convertGoogleDriveUrl(url);
     setPages(newPages);
   };
 
@@ -261,11 +279,10 @@ function NewStoryPageContent() {
 
             <div className="mb-4">
               <p className="text-sm text-gray-400">
-                Add direct image URLs (Google Drive, Imgur, etc.). Pages: {pages.length}/{MAX_PAGES}
+                Add image URLs (Google Drive, Imgur, etc.). Pages: {pages.length}/{MAX_PAGES}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                💡 Google Drive: Use sharing link, then convert to:
-                <code className="text-blue-400 ml-1">https://drive.google.com/uc?export=view&id=YOUR_FILE_ID</code>
+                ✨ Paste Google Drive sharing links - they'll auto-convert to direct image URLs
               </p>
             </div>
 
