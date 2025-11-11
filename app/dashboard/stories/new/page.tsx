@@ -28,6 +28,8 @@ function NewStoryPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Load story data when editing
   useEffect(() => {
@@ -152,7 +154,7 @@ function NewStoryPageContent() {
       const timestamp = Date.now();
       const slug = `${baseSlug}-${timestamp}`;
 
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('user_documents')
         .insert({
           user_id: user.id,
@@ -168,16 +170,19 @@ function NewStoryPageContent() {
             creator_id: user.id,
             pages: validPages
           }
-        });
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
       setSuccess(true);
+      setLastSavedId(insertData.id);
 
-      // Clear form after successful save
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
+      // Don't auto-redirect, let user preview or manually return
+      // setTimeout(() => {
+      //   router.push('/dashboard');
+      // }, 1500);
     } catch (err) {
       console.error('Error saving story:', err);
       setError(err instanceof Error ? err.message : 'Failed to save story');
@@ -367,14 +372,72 @@ function NewStoryPageContent() {
               {saving ? 'Saving...' : 'Save New Draft'}
             </button>
 
+            {lastSavedId && (
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+              >
+                {showPreview ? 'Hide Preview' : 'Preview Story'}
+              </button>
+            )}
+
             <button
               onClick={() => router.push('/dashboard')}
               disabled={saving}
               className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Cancel
+              {lastSavedId ? 'Back to Dashboard' : 'Cancel'}
             </button>
           </div>
+
+          {/* Preview Section */}
+          {showPreview && lastSavedId && (
+            <div className="mt-8 border-t border-gray-700 pt-8">
+              <h3 className="text-lg font-semibold text-white mb-4">Story Preview</h3>
+              <div className="bg-gray-900 rounded-lg p-6">
+                <div className="max-w-2xl mx-auto">
+                  {/* Story Header */}
+                  <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
+                    {subtitle && <p className="text-xl text-gray-400 mb-2">{subtitle}</p>}
+                    <p className="text-sm text-gray-500">By {author || 'Anonymous'}</p>
+                  </div>
+
+                  {/* Story Pages */}
+                  <div className="space-y-6">
+                    {pages.filter(p => p.image_url.trim()).map((page, index) => (
+                      <div key={index} className="bg-gray-800 rounded-lg p-4">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-500 mb-4">Page {page.page_number}</p>
+                          <img
+                            src={page.image_url}
+                            alt={`Page ${page.page_number}`}
+                            className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
+                            style={{ maxHeight: '600px' }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'text-red-400 text-sm p-4';
+                                errorDiv.textContent = 'Failed to load image';
+                                parent.appendChild(errorDiv);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* End of Story */}
+                  <div className="text-center mt-8 pt-8 border-t border-gray-700">
+                    <p className="text-gray-500 text-sm">The End</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm">
