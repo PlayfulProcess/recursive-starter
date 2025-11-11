@@ -129,7 +129,10 @@ function NewStoryPageContent() {
     setSuccess(false);
 
     try {
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      // Create unique slug with timestamp to avoid conflicts
+      const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const timestamp = Date.now();
+      const slug = `${baseSlug}-${timestamp}`;
 
       const { error: insertError } = await supabase
         .from('user_documents')
@@ -256,9 +259,15 @@ function NewStoryPageContent() {
               </button>
             </div>
 
-            <p className="text-sm text-gray-400 mb-4">
-              Add direct image URLs (Google Drive, Imgur, etc.). Pages: {pages.length}/{MAX_PAGES}
-            </p>
+            <div className="mb-4">
+              <p className="text-sm text-gray-400">
+                Add direct image URLs (Google Drive, Imgur, etc.). Pages: {pages.length}/{MAX_PAGES}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Google Drive: Use sharing link, then convert to:
+                <code className="text-blue-400 ml-1">https://drive.google.com/uc?export=view&id=YOUR_FILE_ID</code>
+              </p>
+            </div>
 
             <div className="space-y-4">
               {pages.map((page, index) => (
