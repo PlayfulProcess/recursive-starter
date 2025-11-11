@@ -395,48 +395,17 @@ function NewStoryPageContent() {
           {showPreview && lastSavedId && (
             <div className="mt-8 border-t border-gray-700 pt-8">
               <h3 className="text-lg font-semibold text-white mb-4">Story Preview</h3>
-              <div className="bg-gray-900 rounded-lg p-6">
-                <div className="max-w-2xl mx-auto">
-                  {/* Story Header */}
-                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
-                    {subtitle && <p className="text-xl text-gray-400 mb-2">{subtitle}</p>}
-                    <p className="text-sm text-gray-500">By {author || 'Anonymous'}</p>
-                  </div>
-
-                  {/* Story Pages */}
-                  <div className="space-y-6">
-                    {pages.filter(p => p.image_url.trim()).map((page, index) => (
-                      <div key={index} className="bg-gray-800 rounded-lg p-4">
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500 mb-4">Page {page.page_number}</p>
-                          <img
-                            src={page.image_url}
-                            alt={`Page ${page.page_number}`}
-                            className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
-                            style={{ maxHeight: '600px' }}
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                const errorDiv = document.createElement('div');
-                                errorDiv.className = 'text-red-400 text-sm p-4';
-                                errorDiv.textContent = 'Failed to load image';
-                                parent.appendChild(errorDiv);
-                              }
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* End of Story */}
-                  <div className="text-center mt-8 pt-8 border-t border-gray-700">
-                    <p className="text-gray-500 text-sm">The End</p>
-                  </div>
-                </div>
+              <div className="bg-gray-900 rounded-lg overflow-hidden" style={{ height: '80vh' }}>
+                <iframe
+                  src={`https://dev.recursive.eco/pages/content/viewer.html?id=${lastSavedId}&type=story`}
+                  className="w-full h-full border-0"
+                  title="Story Preview"
+                  sandbox="allow-scripts allow-same-origin"
+                />
               </div>
+              <p className="text-gray-400 text-sm mt-4 text-center">
+                This is how your story will look when published (using unified content viewer from dev.recursive.eco)
+              </p>
             </div>
           )}
 

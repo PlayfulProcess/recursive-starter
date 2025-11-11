@@ -420,41 +420,17 @@ function NewPlaylistPageContent() {
           {showPreview && lastSavedId && (
             <div className="mt-8 border-t border-gray-700 pt-8">
               <h3 className="text-lg font-semibold text-white mb-4">Playlist Preview</h3>
-              <div className="bg-gray-900 rounded-lg p-6">
-                <div className="max-w-2xl mx-auto">
-                  {/* Playlist Header */}
-                  <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">{title}</h1>
-                    {description && <p className="text-lg text-gray-400 mb-2">{description}</p>}
-                    {category && <p className="text-sm text-gray-500">Category: {category}</p>}
-                    <p className="text-sm text-gray-500 mt-2">{videos.filter(v => v.video_id).length} videos</p>
-                  </div>
-
-                  {/* Video List */}
-                  <div className="space-y-6">
-                    {videos.filter(v => v.video_id.trim()).map((video, index) => (
-                      <div key={index} className="bg-gray-800 rounded-lg overflow-hidden">
-                        <div className="aspect-video">
-                          <iframe
-                            width="100%"
-                            height="100%"
-                            src={`https://www.youtube-nocookie.com/embed/${video.video_id}`}
-                            title={video.title || `Video ${video.position}`}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                          />
-                        </div>
-                        {video.title && (
-                          <div className="p-4">
-                            <h3 className="text-white font-medium">{video.title}</h3>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="bg-gray-900 rounded-lg overflow-hidden" style={{ height: '80vh' }}>
+                <iframe
+                  src={`https://dev.recursive.eco/pages/content/viewer.html?id=${lastSavedId}&type=playlist`}
+                  className="w-full h-full border-0"
+                  title="Playlist Preview"
+                  sandbox="allow-scripts allow-same-origin"
+                />
               </div>
+              <p className="text-gray-400 text-sm mt-4 text-center">
+                This is how your playlist will look when published (using unified content viewer from dev.recursive.eco)
+              </p>
             </div>
           )}
 
