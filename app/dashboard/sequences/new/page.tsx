@@ -64,7 +64,27 @@ function NewSequencePageContent() {
       setDescription(data.document_data.description || '');
 
       if (data.document_data.items && data.document_data.items.length > 0) {
-        setItems(data.document_data.items);
+        // Unwrap double-proxied URLs from old data
+        const cleanedItems = data.document_data.items.map((item: SequenceItem) => {
+          if (item.type === 'image' && item.image_url) {
+            // Check if URL is double-wrapped: /api/proxy-image?url=/api/proxy-image?url=...
+            const doubleProxyMatch = item.image_url.match(/\/api\/proxy-image\?url=(.+)/);
+            if (doubleProxyMatch) {
+              const innerUrl = decodeURIComponent(doubleProxyMatch[1]);
+              // Check if inner URL is also proxied
+              const innerProxyMatch = innerUrl.match(/\/api\/proxy-image\?url=(.+)/);
+              if (innerProxyMatch) {
+                // Double-wrapped! Extract the real URL
+                return { ...item, image_url: decodeURIComponent(innerProxyMatch[1]) };
+              } else {
+                // Single-wrapped, extract the URL
+                return { ...item, image_url: innerUrl };
+              }
+            }
+          }
+          return item;
+        });
+        setItems(cleanedItems);
       }
     } catch (err) {
       console.error('Error loading project:', err);
@@ -103,6 +123,23 @@ function NewSequencePageContent() {
     return url;
   };
 
+  const convertGoogleDriveVideoUrl = (url: string): string => {
+    const drivePatterns = [
+      /drive\.google\.com\/file\/d\/([^\/]+)/,
+      /drive\.google\.com\/open\?id=([^&]+)/,
+    ];
+
+    for (const pattern of drivePatterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        // Use Google Drive embed URL for videos
+        return match[1]; // Return just the ID, we'll use it in iframe
+      }
+    }
+
+    return url;
+  };
+
   const extractYouTubeId = (url: string): string => {
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
@@ -122,14 +159,25 @@ function NewSequencePageContent() {
   const detectUrlType = (url: string): { type: ItemType; processedUrl: string } => {
     const trimmedUrl = url.trim();
 
+    // Check for manual type prefix: "video: URL" or "image: URL"
+    const videoPrefixMatch = trimmedUrl.match(/^video:\s*(.+)/i);
+    const imagePrefixMatch = trimmedUrl.match(/^image:\s*(.+)/i);
+
+    if (videoPrefixMatch) {
+      return { type: 'video', processedUrl: videoPrefixMatch[1].trim() };
+    }
+
+    if (imagePrefixMatch) {
+      return { type: 'image', processedUrl: imagePrefixMatch[1].trim() };
+    }
+
     // YouTube detection
     if (trimmedUrl.includes('youtube.com') || trimmedUrl.includes('youtu.be')) {
       return { type: 'video', processedUrl: trimmedUrl };
     }
 
-    // Drive detection - default to image, but could be video
+    // Drive detection - default to image unless prefixed
     if (trimmedUrl.includes('drive.google.com')) {
-      // For now, assume images. Could enhance to detect file type later
       return { type: 'image', processedUrl: trimmedUrl };
     }
 
@@ -138,12 +186,17 @@ function NewSequencePageContent() {
   };
 
   const handleParseBulkUrls = () => {
-    if (!bulkUrls.trim()) return;
+    if (!bulkUrls.trim()) {
+      // Empty textarea = clear all items
+      setItems([]);
+      setError(null);
+      return;
+    }
 
     const lines = bulkUrls.split(/[\n,]+/).filter(line => line.trim());
 
-    if (items.length + lines.length > MAX_ITEMS) {
-      setError(`Maximum ${MAX_ITEMS} items allowed. You're trying to add ${lines.length} items to ${items.length} existing items.`);
+    if (lines.length > MAX_ITEMS) {
+      setError(`Maximum ${MAX_ITEMS} items allowed. You have ${lines.length} URLs.`);
       return;
     }
 
@@ -153,18 +206,34 @@ function NewSequencePageContent() {
       const { type, processedUrl } = detectUrlType(line);
 
       if (type === 'video') {
-        const videoId = extractYouTubeId(processedUrl);
-        newItems.push({
-          position: items.length + index + 1,
-          type: 'video',
-          video_id: videoId,
-          url: processedUrl,
-          title: ''
-        });
+        // Check if it's YouTube or Drive
+        if (processedUrl.includes('youtube.com') || processedUrl.includes('youtu.be')) {
+          const videoId = extractYouTubeId(processedUrl);
+          newItems.push({
+            position: index + 1,
+            type: 'video',
+            video_id: videoId,
+            url: processedUrl,
+            title: ''
+          });
+        } else if (processedUrl.includes('drive.google.com')) {
+          // Drive video
+          const driveId = convertGoogleDriveVideoUrl(processedUrl);
+          newItems.push({
+            position: index + 1,
+            type: 'video',
+            video_id: driveId,  // Drive file ID
+            url: processedUrl,
+            title: ''
+          });
+        } else {
+          // Unknown video type, skip
+          console.warn('Unknown video URL format:', processedUrl);
+        }
       } else {
         const convertedUrl = convertGoogleDriveUrl(processedUrl);
         newItems.push({
-          position: items.length + index + 1,
+          position: index + 1,
           type: 'image',
           image_url: convertedUrl,
           alt_text: '',
@@ -173,8 +242,8 @@ function NewSequencePageContent() {
       }
     });
 
-    setItems([...items, ...newItems]);
-    // Don't clear textarea - let user keep editing the list
+    // REPLACE items completely (don't add to existing)
+    setItems(newItems);
     setError(null);
   };
 
@@ -299,6 +368,69 @@ function NewSequencePageContent() {
     }
   };
 
+  const handleSaveAsNew = async () => {
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+
+    // Filter out items with empty content
+    const validItems = items.filter(item => {
+      if (item.type === 'image') {
+        return item.image_url && item.image_url.trim() !== '';
+      } else {
+        return item.video_id && item.video_id.trim() !== '';
+      }
+    });
+
+    if (validItems.length === 0) {
+      setError('At least one item with content is required');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // Always create new project (ignore editingId)
+      const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const timestamp = Date.now();
+      const slug = `${baseSlug}-${timestamp}`;
+
+      const { data: insertData, error: insertError } = await supabase
+        .from('user_documents')
+        .insert({
+          user_id: user.id,
+          document_type: 'creative_work',
+          tool_slug: 'sequence',
+          story_slug: slug,
+          document_data: {
+            title: title.trim(),
+            description: description.trim(),
+            is_active: 'false',
+            reviewed: 'false',
+            creator_id: user.id,
+            items: validItems
+          }
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      setSuccess(true);
+      setLastSavedId(insertData.id);
+      // Redirect to edit the new project
+      router.push(`/dashboard/sequences/new?id=${insertData.id}`);
+    } catch (err) {
+      console.error('Error saving as new project:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save as new project');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900">
       <nav className="bg-gray-800 shadow-sm border-b border-gray-700">
@@ -381,10 +513,10 @@ function NewSequencePageContent() {
                     onChange={(e) => setBulkUrls(e.target.value)}
                     rows={8}
                     className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                    placeholder="https://drive.google.com/file/d/...&#10;https://youtube.com/watch?v=...&#10;https://drive.google.com/file/d/..."
+                    placeholder="https://drive.google.com/file/d/... (defaults to image)&#10;video: https://drive.google.com/file/d/... (Drive video)&#10;https://youtube.com/watch?v=..."
                   />
                   <p className="text-xs text-gray-500 mt-2">
-                    ✨ Auto-detects: Google Drive (images/videos), YouTube videos
+                    ✨ Auto-detects YouTube videos. Drive defaults to images. Prefix with <code className="bg-gray-600 px-1 rounded">video:</code> for Drive videos.
                   </p>
                 </div>
                 <button
@@ -498,6 +630,16 @@ function NewSequencePageContent() {
               >
                 {saving ? 'Saving...' : (editingId ? 'Save Changes' : 'Save New Project')}
               </button>
+
+              {editingId && (
+                <button
+                  onClick={handleSaveAsNew}
+                  disabled={saving || !title.trim() || items.length === 0}
+                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Save As New Project
+                </button>
+              )}
 
               <button
                 onClick={() => router.push('/dashboard')}

@@ -145,13 +145,25 @@ export default function SequenceViewer({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-4xl">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${currentItem.video_id}?rel=0&modestbranding=1`}
-                title={currentItem.title || `Video ${currentItem.position}`}
-                className="w-full aspect-video rounded-lg"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              {currentItem.video_id && currentItem.video_id.length === 11 ? (
+                // YouTube video (11 character ID)
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${currentItem.video_id}?rel=0&modestbranding=1`}
+                  title={currentItem.title || `Video ${currentItem.position}`}
+                  className="w-full aspect-video rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                // Google Drive video (longer ID)
+                <iframe
+                  src={`https://drive.google.com/file/d/${currentItem.video_id}/preview`}
+                  title={currentItem.title || `Video ${currentItem.position}`}
+                  className="w-full aspect-video rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </div>
             {currentItem.title && (
               <div className="mt-4 max-w-2xl mx-auto text-center">
