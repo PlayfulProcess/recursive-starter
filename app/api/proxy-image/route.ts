@@ -14,8 +14,6 @@ export async function GET(request: NextRequest) {
   const allowedDomains = [
     'drive.google.com',
     'lh3.googleusercontent.com',
-    'i.imgur.com',
-    'imgur.com',
     'supabase.co',
   ];
 

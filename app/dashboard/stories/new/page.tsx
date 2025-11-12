@@ -103,8 +103,8 @@ function NewStoryPageContent() {
     for (const pattern of drivePatterns) {
       const match = url.match(pattern);
       if (match && match[1]) {
-        // Use Google's direct image CDN (more reliable for CORS)
-        return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        // Use uc?export=view format (works directly with proper CORS headers)
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
       }
     }
 
@@ -290,7 +290,7 @@ function NewStoryPageContent() {
 
             <div className="mb-4">
               <p className="text-sm text-gray-400">
-                Add image URLs (Google Drive, Imgur, etc.). Pages: {pages.length}/{MAX_PAGES}
+                Add image URLs from Google Drive or any direct image link. Pages: {pages.length}/{MAX_PAGES}
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 ✨ Paste Google Drive sharing links - they'll auto-convert to direct image URLs
