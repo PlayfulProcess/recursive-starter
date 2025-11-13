@@ -143,7 +143,7 @@ export default function SequenceViewer({
             )}
           </div>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-4">
+          <div className="w-full h-full flex items-center justify-center p-4 relative">
             <div className="w-full max-w-4xl">
               {currentItem.video_id && currentItem.video_id.length === 11 ? (
                 // YouTube video (11 character ID)
@@ -166,8 +166,8 @@ export default function SequenceViewer({
               )}
             </div>
             {currentItem.title && (
-              <div className="mt-4 max-w-2xl mx-auto text-center">
-                <p className="text-white text-lg px-6 py-3 bg-black/50 rounded-lg backdrop-blur-sm">
+              <div className="absolute bottom-8 left-0 right-0 text-center pointer-events-none">
+                <p className="text-white text-lg px-6 py-3 bg-black/50 rounded-lg backdrop-blur-sm inline-block">
                   {currentItem.title}
                 </p>
               </div>
