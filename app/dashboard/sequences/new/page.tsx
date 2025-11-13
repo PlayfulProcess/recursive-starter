@@ -40,6 +40,12 @@ function NewSequencePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Drive folder import modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [folderUrl, setFolderUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
   // Load sequence data when editing
   useEffect(() => {
     if (editingId && user) {
@@ -266,6 +272,45 @@ function NewSequencePageContent() {
     // REPLACE items completely (don't add to existing)
     setItems(newItems);
     setError(null);
+  };
+
+  const handleImportDriveFolder = async () => {
+    if (!folderUrl.trim()) {
+      setImportError('Please enter a folder URL');
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+
+    try {
+      const response = await fetch('/api/import-drive-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderUrl })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import folder');
+      }
+
+      // Auto-populate bulk textarea with imported URLs
+      setBulkUrls(data.urls.join('\n'));
+
+      // Close modal
+      setShowImportModal(false);
+      setFolderUrl('');
+
+      // Show success message
+      setError(`✅ Imported ${data.count} files! Click "Update Sidebar" to add them.`);
+
+    } catch (err: any) {
+      setImportError(err.message || 'Failed to import folder');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleReorderItem = (currentIndex: number, newPosition: number) => {
@@ -539,13 +584,22 @@ function NewSequencePageContent() {
                     ✨ Auto-detects YouTube videos. Drive defaults to images. Prefix with <code className="bg-gray-600 px-1 rounded">video:</code> for Drive videos.
                   </p>
                 </div>
-                <button
-                  onClick={handleParseBulkUrls}
-                  disabled={!bulkUrls.trim() || items.length >= MAX_ITEMS}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Update Sidebar →
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleParseBulkUrls}
+                    disabled={!bulkUrls.trim() || items.length >= MAX_ITEMS}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Update Sidebar →
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
+                    title="Import all files from a Drive folder"
+                  >
+                    📁 Import Folder
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -678,6 +732,72 @@ function NewSequencePageContent() {
           )}
         </div>
       </main>
+
+      {/* Import Drive Folder Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-white">Import from Drive Folder</h3>
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setFolderUrl('');
+                  setImportError(null);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Google Drive Folder URL
+                </label>
+                <input
+                  type="text"
+                  value={folderUrl}
+                  onChange={(e) => setFolderUrl(e.target.value)}
+                  placeholder="https://drive.google.com/drive/folders/..."
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  autoFocus
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  ⚠️ Folder must be set to "Anyone with link can view"
+                </p>
+              </div>
+
+              {importError && (
+                <div className="px-4 py-3 bg-red-900/20 border border-red-500 rounded-lg text-red-400 text-sm">
+                  {importError}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setFolderUrl('');
+                    setImportError(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportDriveFolder}
+                  disabled={importing || !folderUrl.trim()}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {importing ? 'Importing...' : 'Import Files'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
