@@ -158,7 +158,7 @@ export default function DashboardPage() {
                               type="text"
                               value={`https://recursive.eco/view/${sequence.id}`}
                               readOnly
-                              className="flex-1 text-xs px-2 py-1 bg-white border border-gray-300 rounded font-mono"
+                              className="flex-1 text-xs px-2 py-1 bg-gray-700 border border-gray-600 rounded font-mono text-gray-200"
                               onClick={(e) => (e.target as HTMLInputElement).select()}
                             />
                             <button
