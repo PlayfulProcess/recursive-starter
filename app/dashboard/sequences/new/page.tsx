@@ -351,7 +351,7 @@ function NewSequencePageContent() {
     setItems(newItems);
   };
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = async (forcePublished?: boolean) => {
     if (!title.trim()) {
       setError('Title is required');
       return;
@@ -375,13 +375,16 @@ function NewSequencePageContent() {
     setError(null);
     setSuccess(false);
 
+    // Use the parameter to determine publish state, NOT the state variable
+    const shouldPublish = forcePublished !== undefined ? forcePublished : isPublished;
+
     try {
       if (editingId) {
         // UPDATE MODE: Save over existing project
         const wasPublished = publishedUrl !== null; // Track if was already published
 
-        console.log('💾 Saving with isPublished state:', isPublished);
-        console.log('💾 is_active will be set to:', isPublished ? 'true' : 'false');
+        console.log('💾 Saving with shouldPublish:', shouldPublish);
+        console.log('💾 is_active will be set to:', shouldPublish ? 'true' : 'false');
 
         const { data: updateData, error: updateError } = await supabase
           .from('user_documents')
@@ -389,7 +392,7 @@ function NewSequencePageContent() {
             document_data: {
               title: title.trim(),
               description: description.trim(),
-              is_active: isPublished ? 'true' : 'false',
+              is_active: shouldPublish ? 'true' : 'false',
               reviewed: 'false',
               creator_id: user.id,
               items: validItems  // Save raw URLs, no proxy wrapping
@@ -405,7 +408,7 @@ function NewSequencePageContent() {
         console.log('✅ Database updated. Returned data:', updateData?.document_data?.is_active);
 
         // Send emails if newly published (wasn't published before, now is)
-        if (isPublished && !wasPublished) {
+        if (shouldPublish && !wasPublished) {
           console.log('📧 Sending publish notification emails...');
           try {
             await fetch('/api/notify-publish', {
@@ -427,10 +430,12 @@ function NewSequencePageContent() {
           }
         }
 
-        if (isPublished) {
+        if (shouldPublish) {
           setPublishedUrl(`https://recursive.eco/view/${editingId}`);
+          setIsPublished(true);
         } else {
           setPublishedUrl(null);
+          setIsPublished(false);
         }
 
         setSuccess(true);
@@ -440,8 +445,8 @@ function NewSequencePageContent() {
         const timestamp = Date.now();
         const slug = `${baseSlug}-${timestamp}`;
 
-        console.log('💾 Creating new project with isPublished:', isPublished);
-        console.log('💾 is_active will be set to:', isPublished ? 'true' : 'false');
+        console.log('💾 Creating new project with shouldPublish:', shouldPublish);
+        console.log('💾 is_active will be set to:', shouldPublish ? 'true' : 'false');
 
         const { data: insertData, error: insertError } = await supabase
           .from('user_documents')
@@ -453,7 +458,7 @@ function NewSequencePageContent() {
             document_data: {
               title: title.trim(),
               description: description.trim(),
-              is_active: isPublished ? 'true' : 'false',
+              is_active: shouldPublish ? 'true' : 'false',
               reviewed: 'false',
               creator_id: user.id,
               items: validItems  // Save raw URLs, no proxy wrapping
@@ -471,7 +476,7 @@ function NewSequencePageContent() {
         }
 
         // Send emails if published
-        if (isPublished) {
+        if (shouldPublish) {
           console.log('📧 Sending publish notification emails...');
           try {
             await fetch('/api/notify-publish', {
@@ -493,6 +498,9 @@ function NewSequencePageContent() {
           }
 
           setPublishedUrl(`https://recursive.eco/view/${insertData.id}`);
+          setIsPublished(true);
+        } else {
+          setIsPublished(false);
         }
 
         setSuccess(true);
@@ -813,8 +821,8 @@ function NewSequencePageContent() {
             <div className="flex gap-4">
               <button
                 onClick={() => {
-                  setIsPublished(false);
-                  handleSaveDraft();
+                  console.log('📝 Save Draft button clicked');
+                  handleSaveDraft(false);  // Force to draft mode
                 }}
                 disabled={saving || !title.trim() || items.length === 0}
                 className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -824,10 +832,8 @@ function NewSequencePageContent() {
 
               <button
                 onClick={() => {
-                  console.log('🚀 Publish button clicked - setting isPublished to true');
-                  setIsPublished(true);
-                  // Use setTimeout to ensure state update happens before save
-                  setTimeout(() => handleSaveDraft(), 50);
+                  console.log('🚀 Publish button clicked');
+                  handleSaveDraft(true);  // Force to published mode
                 }}
                 disabled={saving || !title.trim() || items.length === 0}
                 className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
