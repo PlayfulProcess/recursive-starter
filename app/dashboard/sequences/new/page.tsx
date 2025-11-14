@@ -683,7 +683,7 @@ function NewSequencePageContent() {
                   <textarea
                     value={bulkUrls}
                     onChange={(e) => setBulkUrls(e.target.value)}
-                    className="w-full h-[600px] px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-none overflow-y-auto"
+                    className="w-full h-[300px] px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-none overflow-y-auto"
                     placeholder="https://drive.google.com/file/d/... (defaults to image)&#10;video: https://drive.google.com/file/d/... (Drive video)&#10;https://youtube.com/watch?v=..."
                   />
                   <p className="text-xs text-gray-500 mt-2">
