@@ -1,3 +1,14 @@
+# feedback from user
+
+Actually, can you make it so that the user can save a draft without a title?
+
+ANd the box with the URL to Published project to appear below the button of publishing as the user would not know where to find it. 
+
+
+THe numbered approach almost worked! You need to enlarge the link box to fit the numbered frame. Right now it is about haf the size
+
+
+
 # Context for Claude Code: Recursive Creator Project
 
 > **Last Updated:** 2025-11-13 (Session 11 - Phase 7 Complete & Deployed!)

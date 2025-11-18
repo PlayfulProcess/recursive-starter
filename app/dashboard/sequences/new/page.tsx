@@ -69,7 +69,17 @@ function NewSequencePageContent() {
 
       setTitle(data.document_data.title || '');
       setDescription(data.document_data.description || '');
-      setIsPublished(data.is_public || false);
+
+      // Check if published (from document_data.is_published)
+      const isPublishedValue = data.document_data.is_published === 'true';
+      setIsPublished(isPublishedValue);
+
+      // Set published URL if published
+      if (isPublishedValue) {
+        setPublishedUrl(`https://recursive.eco/view/${id}`);
+      } else {
+        setPublishedUrl(null);
+      }
 
       if (data.document_data.items && data.document_data.items.length > 0) {
         // Unwrap double-proxied URLs from old data
@@ -386,12 +396,14 @@ function NewSequencePageContent() {
         const { data: updateData, error: updateError } = await supabase
           .from('user_documents')
           .update({
-            is_public: shouldPublish,  // Update the column directly
+            is_public: shouldPublish,  // Keep for backward compatibility
             document_data: {
               title: title.trim(),
               description: description.trim(),
               reviewed: 'false',
               creator_id: user.id,
+              is_published: shouldPublish ? 'true' : 'false',  // ✅ Add this for view.html
+              published_at: shouldPublish ? new Date().toISOString() : null,
               items: validItems  // Save raw URLs, no proxy wrapping
             }
           })
@@ -445,12 +457,14 @@ function NewSequencePageContent() {
             document_type: 'creative_work',
             tool_slug: 'sequence',
             story_slug: slug,
-            is_public: shouldPublish,  // Set the column directly
+            is_public: shouldPublish,  // Keep for backward compatibility
             document_data: {
               title: title.trim(),
               description: description.trim(),
               reviewed: 'false',
               creator_id: user.id,
+              is_published: shouldPublish ? 'true' : 'false',  // ✅ Add this for view.html
+              published_at: shouldPublish ? new Date().toISOString() : null,
               items: validItems  // Save raw URLs, no proxy wrapping
             }
           })
