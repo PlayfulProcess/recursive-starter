@@ -833,6 +833,52 @@ function NewSequencePageContent() {
               </div>
             )}
 
+            {/* Success modal with Submit to Community button */}
+            {success && isPublished && publishedUrl && (
+              <div className="mb-6 bg-green-900/50 border border-green-700 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-green-200 mb-3">
+                  🎉 Published Successfully!
+                </h3>
+                <p className="text-gray-300 mb-4">
+                  Your content is now live at:{' '}
+                  <a
+                    href={publishedUrl}
+                    target="_blank"
+                    rel="noopener"
+                    className="text-purple-400 hover:text-purple-300 underline font-semibold break-all"
+                  >
+                    {publishedUrl}
+                  </a>
+                </p>
+
+                {/* Submit to Community Channel button */}
+                <div className="bg-gray-800 border border-purple-700/50 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-2">
+                    📢 Share with the Community
+                  </h4>
+                  <p className="text-sm text-gray-300 mb-3">
+                    Submit your content to the Kids Stories channel so other families can discover it!
+                  </p>
+                  <p className="text-xs text-gray-400 mb-3 italic">
+                    💡 You can also share links from trusted sources like Goodreads (book recommendations),
+                    Claude/ChatGPT (AI tools), Amazon (products), or Google Drive (shared files).
+                  </p>
+                  <a
+                    href={`https://channels.recursive.eco/submit?link=${encodeURIComponent(publishedUrl)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description || '')}&channel=kids-stories`}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                  >
+                    Submit to Community Stories →
+                  </a>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Opens in channels.recursive.eco with your content pre-filled.
+                    You can review before submitting.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="mb-6 bg-red-900/50 border border-red-700 rounded-lg p-4">
                 <p className="text-red-200">{error}</p>
