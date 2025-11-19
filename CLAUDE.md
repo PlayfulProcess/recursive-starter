@@ -1560,62 +1560,55 @@ Create a community where parents collaboratively build a library of children's s
 
 **Problem:** After publishing, creators don't know how to share with community
 
-**Solution:** Post-publish flow that submits to recursive-channels
+**Solution:** ✅ **SIMPLIFIED:** Pre-fill channels submission form (no complex API!)
 
 **Architecture:**
 
 **Step 1: After Publishing (recursive-creator)**
-```typescript
-// In handleSaveDraft() when publish=true
-if (publishSuccess && isNewlyPublished) {
-  // Show modal: "Submit to Community Stories?"
-  setShowCommunitySubmitModal(true);
+Show success message with "Submit to Community" button that links to channels with pre-filled form data
+
+**Step 2: Success Modal with Pre-filled Link**
+```tsx
+// In handleSaveDraft() after successful publish
+if (publishSuccess && publishedUrl) {
+  // Build pre-filled channels URL
+  const channelSubmitUrl = new URL('https://channels.recursive.eco/submit');
+  channelSubmitUrl.searchParams.set('link', publishedUrl); // recursive.eco/view/{id}
+  channelSubmitUrl.searchParams.set('title', title);
+  channelSubmitUrl.searchParams.set('description', description || '');
+  channelSubmitUrl.searchParams.set('channel', 'kids-stories');
+
+  // Show in success message
+  <div>
+    <h2>🎉 Story Published!</h2>
+    <p>Your story is live at: {publishedUrl}</p>
+
+    <a href={channelSubmitUrl.toString()}
+       target="_blank"
+       className="btn-primary">
+      📢 Submit to Community Stories
+    </a>
+
+    <p className="text-xs text-gray-400">
+      Opens in channels.recursive.eco with pre-filled form.
+      You can review before submitting.
+    </p>
+  </div>
 }
 ```
 
-**Step 2: Community Submit Modal**
-```tsx
-<Modal>
-  <h2>🎉 Story Published!</h2>
-  <p>Your story is live at: recursive.eco/view/{id}</p>
+**Step 3: Channels Handles Submission**
+- User clicks → Opens channels.recursive.eco/submit with pre-filled data
+- User reviews/edits if needed
+- User submits through existing channels flow
+- You approve in existing channels admin (no new code needed!)
 
-  <div className="mt-4">
-    <h3>Share with the Community?</h3>
-    <p>Submit your story to the "Kids Stories" channel where other parents can discover it.</p>
-
-    <label>
-      <input type="checkbox" checked={agreedToTerms} />
-      I agree that:
-      - This story is appropriate for children
-      - I own or have rights to all content
-      - Story is licensed under Creative Commons BY-SA 4.0
-      - Recursive.eco can moderate/remove at any time
-    </label>
-
-    <button onClick={submitToCommunity}>
-      Submit to Community Stories
-    </button>
-    <button onClick={close}>
-      Skip (I'll share privately)
-    </button>
-  </div>
-</Modal>
-```
-
-**Step 3: Backend API Route**
-```typescript
-// POST /api/submit-to-community
-// 1. Verify user owns the story
-// 2. Check story is published (is_public=true)
-// 3. Create entry in recursive-channels database
-// 4. Set status to "pending_approval"
-// 5. Notify moderator (you) via email
-```
-
-**Step 4: Approval Workflow**
-- You review story in recursive-channels admin
-- Approve → story appears in "Kids Stories" channel
-- Deny → story removed, user NOT notified (as per your requirement)
+**Benefits:**
+- ✅ No new API needed
+- ✅ Uses existing channels submission flow
+- ✅ User can edit before submitting
+- ✅ Familiar approval workflow
+- ✅ Much simpler implementation
 
 ---
 
@@ -1839,36 +1832,29 @@ If you believe content infringes your copyright:
 **Files:**
 - `recursive-landing/view.html` (add CTA banner)
 
-#### Phase 8.3: Community Submission Flow (Week 2)
+#### Phase 8.3: Community Submission Flow (Week 2) - SIMPLIFIED!
 
 **Tasks:**
-- [ ] Create post-publish modal in recursive-creator
-- [ ] Build `/api/submit-to-community` endpoint
-- [ ] Integrate with recursive-channels database
-- [ ] Send email notification to you on new submissions
-- [ ] Create pending stories queue in channels admin
+- [ ] Add "Submit to Community" button to publish success message
+- [ ] Build pre-filled URL with story data (link, title, description)
+- [ ] Ensure channels.recursive.eco/submit accepts URL params
+- [ ] ~~No API needed!~~ Uses existing channels flow
 
 **Files:**
-- `recursive-creator/app/dashboard/sequences/new/page.tsx` (modal)
-- `recursive-creator/app/api/submit-to-community/route.ts` (new)
-- Supabase: Add `community_submissions` table or use existing channels
+- `recursive-creator/app/dashboard/sequences/new/page.tsx` (add button to success message)
+- `recursive-channels-fresh/` (verify submit form accepts query params)
 
-**Database Schema:**
-```sql
--- Option 1: New table (cleaner)
-CREATE TABLE community_story_submissions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  story_id uuid REFERENCES user_documents(id),
-  creator_id uuid REFERENCES profiles(id),
-  status text DEFAULT 'pending', -- pending, approved, denied
-  submitted_at timestamptz DEFAULT now(),
-  reviewed_at timestamptz,
-  reviewed_by text
-);
-
--- Option 2: Use existing channels table
--- Add story submissions as channel posts with special flag
+**Implementation:**
+```typescript
+// In publish success section
+const channelSubmitUrl = `https://channels.recursive.eco/submit?` +
+  `link=${encodeURIComponent(publishedUrl)}` +
+  `&title=${encodeURIComponent(title)}` +
+  `&description=${encodeURIComponent(description || '')}` +
+  `&channel=kids-stories`;
 ```
+
+**Much simpler than original plan - no new database tables, no API routes!**
 
 #### Phase 8.4: Content Reporting (Week 2)
 
