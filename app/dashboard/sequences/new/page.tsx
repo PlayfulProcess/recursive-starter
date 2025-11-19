@@ -233,7 +233,8 @@ function NewSequencePageContent() {
       return;
     }
 
-    const lines = bulkUrls.split(/[\n,]+/).filter(line => line.trim());
+    // Sort URLs alphabetically by filename/URL
+    const lines = bulkUrls.split(/[\n,]+/).filter(line => line.trim()).sort();
 
     if (lines.length > MAX_ITEMS) {
       setError(`Maximum ${MAX_ITEMS} items allowed. You have ${lines.length} URLs.`);
@@ -688,16 +689,36 @@ function NewSequencePageContent() {
                         {/* File Name/Title Preview */}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-gray-400 truncate" title={item.type === 'image' ? item.image_url : item.url}>
-                            {item.type === 'image' && item.alt_text
-                              ? item.alt_text
-                              : item.type === 'video' && item.title
-                                ? item.title
-                                : item.type === 'image' && item.image_url
-                                  ? (item.image_url.includes('drive.google.com') ? 'Drive Image' : 'Image')
-                                  : item.type === 'video' && item.video_id
-                                    ? `Video: ${item.video_id.substring(0, 8)}`
-                                    : 'Item'
-                            }
+                            {(() => {
+                              // Extract filename from URL
+                              const url = item.type === 'image' ? item.image_url : item.url;
+                              if (!url) return 'Item';
+
+                              try {
+                                if (url.includes('drive.google.com')) {
+                                  // Extract Drive file ID as identifier
+                                  const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                                  return idMatch ? `Drive: ${idMatch[1].substring(0, 12)}...` : 'Drive file';
+                                } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                                  // For YouTube, show video ID
+                                  const videoIdMatch = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                  return videoIdMatch ? `YT: ${videoIdMatch[1]}` : 'YouTube';
+                                } else {
+                                  // Try to get filename from URL path
+                                  const urlParts = url.split('/');
+                                  const lastPart = urlParts[urlParts.length - 1];
+                                  if (lastPart) {
+                                    // Remove query params and decode
+                                    const fileName = decodeURIComponent(lastPart.split('?')[0]);
+                                    // Truncate if too long
+                                    return fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
+                                  }
+                                }
+                              } catch (e) {
+                                console.warn('Error extracting filename:', e);
+                              }
+                              return 'File';
+                            })()}
                           </p>
                         </div>
 
