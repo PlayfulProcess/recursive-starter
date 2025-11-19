@@ -233,8 +233,8 @@ function NewSequencePageContent() {
       return;
     }
 
-    // Sort URLs alphabetically by filename/URL
-    const lines = bulkUrls.split(/[\n,]+/).filter(line => line.trim()).sort();
+    // Keep URLs in the order they appear in the textarea
+    const lines = bulkUrls.split(/[\n,]+/).filter(line => line.trim());
 
     if (lines.length > MAX_ITEMS) {
       setError(`Maximum ${MAX_ITEMS} items allowed. You have ${lines.length} URLs.`);
