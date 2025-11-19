@@ -583,60 +583,6 @@ function NewSequencePageContent() {
         <div className="space-y-8">
           {/* Metadata */}
           <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-            {success && publishedUrl && (
-              <div className="mb-6 bg-green-900/20 border border-green-500 rounded-lg p-4">
-                <h3 className="text-green-400 font-semibold mb-2">
-                  ✅ Project Published!
-                </h3>
-                <p className="text-sm text-gray-300 mb-3">
-                  Your project is now live. Share this link:
-                </p>
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    type="text"
-                    value={publishedUrl}
-                    readOnly
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white font-mono text-sm"
-                    onClick={(e) => (e.target as HTMLInputElement).select()}
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(publishedUrl);
-                      alert('Link copied to clipboard!');
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    📋 Copy
-                  </button>
-                  <a
-                    href={publishedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                  >
-                    🔗 View
-                  </a>
-                </div>
-                <p className="text-xs text-gray-500">
-                  ⚠️ This link is public. Anyone with it can view your project.
-                </p>
-              </div>
-            )}
-
-            {success && !publishedUrl && (
-              <div className="mb-6 bg-green-900/50 border border-green-700 rounded-lg p-4">
-                <p className="text-green-200">
-                  {editingId ? 'Project updated successfully!' : 'Project created successfully!'}
-                </p>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-6 bg-red-900/50 border border-red-700 rounded-lg p-4">
-                <p className="text-red-200">{error}</p>
-              </div>
-            )}
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -676,93 +622,46 @@ function NewSequencePageContent() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Paste URLs (one per line or comma-separated)
                   </label>
-                  <div className="border border-gray-600 rounded-lg bg-gray-700">
-                    {/* Table-like layout: Line# | Filename | URL */}
-                    <div className="h-[40vh] overflow-y-auto">
-                      <div className="flex flex-col font-mono text-sm">
-                        {bulkUrls.split('\n').filter(line => line.trim()).map((line, i) => {
-                          // Extract filename from URL
-                          let fileName = '';
-                          if (line.trim()) {
-                            try {
-                              // Remove "video:" prefix if present
-                              const cleanLine = line.replace(/^video:\s*/i, '').trim();
+                  <div className="border border-gray-600 rounded-lg bg-gray-700 p-2">
+                    {/* Scrollable numbered list */}
+                    <div className="h-[40vh] overflow-y-auto space-y-2">
+                      {bulkUrls.split('\n').filter(line => line.trim()).map((line, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          {/* Line number */}
+                          <div className="flex-shrink-0 w-8 text-right text-gray-500 font-mono text-sm">
+                            {i + 1}
+                          </div>
 
-                              // Try to extract filename
-                              if (cleanLine.includes('drive.google.com')) {
-                                // Try to extract file ID and use as identifier
-                                const idMatch = cleanLine.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                                fileName = idMatch ? `Drive: ${idMatch[1].substring(0, 8)}...` : 'Drive file';
-                              } else if (cleanLine.includes('youtube.com') || cleanLine.includes('youtu.be')) {
-                                // For YouTube, show video ID
-                                const videoIdMatch = cleanLine.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-                                fileName = videoIdMatch ? `YT: ${videoIdMatch[1]}` : 'YouTube';
-                              } else {
-                                // Try to get filename from URL
-                                const urlParts = cleanLine.split('/');
-                                const lastPart = urlParts[urlParts.length - 1];
-                                if (lastPart) {
-                                  // Remove query params and decode
-                                  fileName = decodeURIComponent(lastPart.split('?')[0]);
-                                  // Truncate if too long
-                                  if (fileName.length > 25) {
-                                    fileName = fileName.substring(0, 22) + '...';
-                                  }
-                                }
-                              }
-                            } catch (e) {
-                              fileName = 'File';
-                            }
-                          }
+                          {/* URL input */}
+                          <input
+                            type="text"
+                            value={line}
+                            onChange={(e) => {
+                              const allLines = bulkUrls.split('\n');
+                              const nonEmptyLines = allLines.filter(l => l.trim());
+                              nonEmptyLines[i] = e.target.value;
+                              const cleanedLines = nonEmptyLines.filter(l => l.trim());
+                              setBulkUrls(cleanedLines.join('\n'));
+                            }}
+                            className="flex-1 px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Paste URL here..."
+                          />
 
-                          return (
-                            <div
-                              key={i}
-                              className="flex items-stretch border-b border-gray-600 hover:bg-gray-600/30 transition-colors"
-                            >
-                              {/* Line number */}
-                              <div className="flex-shrink-0 w-10 px-2 py-1 bg-gray-800 text-gray-500 text-right border-r border-gray-600">
-                                {i + 1}
-                              </div>
-
-                              {/* Filename */}
-                              <div className="flex-shrink-0 w-48 px-3 py-1 text-gray-300 border-r border-gray-600 truncate" title={fileName}>
-                                {fileName || <span className="text-gray-600">empty</span>}
-                              </div>
-
-                              {/* URL (editable) */}
-                              <input
-                                type="text"
-                                value={line}
-                                onChange={(e) => {
-                                  const allLines = bulkUrls.split('\n');
-                                  const nonEmptyLines = allLines.filter(l => l.trim());
-                                  nonEmptyLines[i] = e.target.value;
-                                  // Filter out empty values and rejoin
-                                  const cleanedLines = nonEmptyLines.filter(l => l.trim());
-                                  setBulkUrls(cleanedLines.join('\n'));
-                                }}
-                                className="flex-1 px-3 py-1 bg-transparent text-white focus:outline-none focus:bg-gray-600/30"
-                                placeholder="Paste URL here..."
-                              />
-
-                              {/* Delete button */}
-                              <button
-                                onClick={() => {
-                                  const allLines = bulkUrls.split('\n');
-                                  const nonEmptyLines = allLines.filter(l => l.trim());
-                                  nonEmptyLines.splice(i, 1);
-                                  setBulkUrls(nonEmptyLines.join('\n'));
-                                }}
-                                className="flex-shrink-0 px-3 py-1 bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                title="Delete this row"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
+                          {/* Delete button */}
+                          <button
+                            onClick={() => {
+                              const allLines = bulkUrls.split('\n');
+                              const nonEmptyLines = allLines.filter(l => l.trim());
+                              nonEmptyLines.splice(i, 1);
+                              setBulkUrls(nonEmptyLines.join('\n'));
+                            }}
+                            className="flex-shrink-0 w-8 h-8 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center"
+                            title="Delete this line"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
@@ -897,6 +796,61 @@ function NewSequencePageContent() {
 
           {/* Actions */}
           <div className="bg-gray-800 rounded-lg shadow-lg p-6">
+            {/* Success/Error Notifications */}
+            {success && publishedUrl && (
+              <div className="mb-6 bg-green-900/20 border border-green-500 rounded-lg p-4">
+                <h3 className="text-green-400 font-semibold mb-2">
+                  ✅ Project Published!
+                </h3>
+                <p className="text-sm text-gray-300 mb-3">
+                  Your project is now live. Share this link:
+                </p>
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={publishedUrl}
+                    readOnly
+                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white font-mono text-sm"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(publishedUrl);
+                      alert('Link copied to clipboard!');
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    📋 Copy
+                  </button>
+                  <a
+                    href={publishedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    🔗 View
+                  </a>
+                </div>
+                <p className="text-xs text-gray-500">
+                  ⚠️ This link is public. Anyone with it can view your project.
+                </p>
+              </div>
+            )}
+
+            {success && !publishedUrl && (
+              <div className="mb-6 bg-green-900/50 border border-green-700 rounded-lg p-4">
+                <p className="text-green-200">
+                  {editingId ? 'Project updated successfully!' : 'Project created successfully!'}
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-6 bg-red-900/50 border border-red-700 rounded-lg p-4">
+                <p className="text-red-200">{error}</p>
+              </div>
+            )}
+
             <div className="flex gap-4">
               <button
                 onClick={() => handleSaveDraft(false)}  // Force to draft mode
