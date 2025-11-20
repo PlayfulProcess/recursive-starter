@@ -227,7 +227,7 @@ export default function SequenceViewer({
       )}
 
       {/* Content Area */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden pb-28">
         {currentItem.type === 'image' ? (
           <div className="w-full h-full flex flex-col items-center justify-center p-4">
             <img
