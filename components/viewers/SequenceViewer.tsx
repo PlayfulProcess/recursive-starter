@@ -155,8 +155,8 @@ export default function SequenceViewer({
               rel: 0,
               modestbranding: 1,
               enablejsapi: 1,
-              controls: 0,        // Hide all YouTube controls (locked experience)
-              fs: 0,              // Disable YouTube fullscreen button
+              controls: 1,        // Enable all YouTube controls for creators
+              fs: 1,              // Enable YouTube fullscreen button for creators
               iv_load_policy: 3   // Hide video annotations
             },
             events: {
@@ -253,34 +253,6 @@ export default function SequenceViewer({
                     id={`youtube-player-${currentItem.video_id}`}
                     className="w-full h-full rounded-lg"
                   />
-
-                  {/* Play/Pause button overlay (when video is playing) */}
-                  {!videoEnded && (
-                    <button
-                      onClick={() => {
-                        if (!playerRef.current) return;
-                        if (isPlaying) {
-                          playerRef.current.pauseVideo();
-                        } else {
-                          playerRef.current.playVideo();
-                        }
-                      }}
-                      className="absolute inset-0 flex items-center justify-center bg-transparent hover:bg-black/20 transition-all group cursor-pointer z-[100]"
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                    >
-                      <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isPlaying ? (
-                          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
-                  )}
 
                   {/* Custom overlay when video ends */}
                   {videoEnded && (
@@ -383,7 +355,7 @@ export default function SequenceViewer({
       </div>
 
       {/* Controls Overlay - bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 p-6 flex items-center justify-between pointer-events-none z-50">
         {/* Page Counter */}
         <div className="bg-black/70 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm pointer-events-auto">
           {currentIndex + 1} / {items.length}
