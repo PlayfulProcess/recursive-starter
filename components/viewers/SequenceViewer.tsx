@@ -35,6 +35,7 @@ export default function SequenceViewer({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [videoEnded, setVideoEnded] = useState(false);
   const [youtubeApiReady, setYoutubeApiReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
 
@@ -153,14 +154,22 @@ export default function SequenceViewer({
             playerVars: {
               rel: 0,
               modestbranding: 1,
-              enablejsapi: 1
+              enablejsapi: 1,
+              controls: 0,        // Hide all YouTube controls (locked experience)
+              fs: 0,              // Disable YouTube fullscreen button
+              iv_load_policy: 3   // Hide video annotations
             },
             events: {
               onStateChange: (event: any) => {
-                // YT.PlayerState.ENDED = 0
+                // YT.PlayerState: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
                 if (event.data === 0) {
                   console.log('Video ended, showing overlay');
                   setVideoEnded(true);
+                  setIsPlaying(false);
+                } else if (event.data === 1) {
+                  setIsPlaying(true);
+                } else if (event.data === 2) {
+                  setIsPlaying(false);
                 }
               }
             }
@@ -244,6 +253,34 @@ export default function SequenceViewer({
                     id={`youtube-player-${currentItem.video_id}`}
                     className="w-full h-full rounded-lg"
                   />
+
+                  {/* Play/Pause button overlay (when video is playing) */}
+                  {!videoEnded && (
+                    <button
+                      onClick={() => {
+                        if (!playerRef.current) return;
+                        if (isPlaying) {
+                          playerRef.current.pauseVideo();
+                        } else {
+                          playerRef.current.playVideo();
+                        }
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-transparent hover:bg-black/20 transition-all group cursor-pointer z-[100]"
+                      aria-label={isPlaying ? 'Pause' : 'Play'}
+                    >
+                      <div className="w-20 h-20 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        {isPlaying ? (
+                          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                  )}
 
                   {/* Custom overlay when video ends */}
                   {videoEnded && (
