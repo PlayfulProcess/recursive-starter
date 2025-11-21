@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Use YouTube Data API v3 to fetch all videos in playlist
-    const apiKey = process.env.GOOGLE_YOUTUBE_API_KEY;
+    const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
     if (!apiKey) {
-      console.error('GOOGLE_YOUTUBE_API_KEY not configured');
+      console.error('GOOGLE_DRIVE_API_KEY not configured');
       return NextResponse.json(
         { error: 'YouTube API not configured. Please contact support.' },
         { status: 500 }
