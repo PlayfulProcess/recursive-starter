@@ -49,6 +49,12 @@ function NewSequencePageContent() {
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
+  // YouTube playlist import modal
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [playlistUrl, setPlaylistUrl] = useState('');
+  const [importingPlaylist, setImportingPlaylist] = useState(false);
+  const [playlistError, setPlaylistError] = useState<string | null>(null);
+
   // License agreement
   const [licenseAgreed, setLicenseAgreed] = useState(false);
 

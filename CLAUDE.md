@@ -1,12 +1,30 @@
-# feedback from user
+# Phase 11 Fixes Completed (2025-11-20)
 
-Actually, can you make it so that the user can save a draft without a title?
+## ✅ Fixes Successfully Merged to Main:
 
-ANd the box with the URL to Published project to appear below the button of publishing as the user would not know where to find it. 
+**Fix #8 - Container Cropping Issue** ✅ FIXED
+- Added `pb-28` (padding-bottom) to content area in SequenceViewer.tsx:230
+- Prevents content from extending behind controls overlay
+- **Note:** Fullscreen button STILL not visible after this fix
+- **Decision:** Accepted as-is since YouTube provides native controls in creator mode
+- Won't fix fullscreen button specifically for creator piece
+- File: `components/viewers/SequenceViewer.tsx`
 
+**Fix #9 - YouTube Shorts URL Support** ✅ FIXED
+- Added YouTube Shorts pattern: `/youtube\.com\/shorts\/([^&\n?#]+)/`
+- Prevents Shorts URLs from being treated as Drive URLs
+- Now correctly extracts video ID from `https://youtube.com/shorts/VIDEO_ID`
+- File: `app/dashboard/sequences/new/page.tsx:192`
 
-THe numbered approach almost worked! You need to enlarge the link box to fit the numbered frame. Right now it is about haf the size
+**Fix #7 - YouTube Logo** ❌ CANNOT FIX
+- YouTube ToS prohibit hiding logo/branding
+- Must keep logo visible for legal compliance
+- Already using `modestbranding=1` which minimizes branding as much as allowed
 
+**Commit:** 1af73a2 - "fix(Phase 11): Fix container cropping and YouTube Shorts URL parsing"
+**Merged to main:** 2025-11-20
+
+---
 
 
 # Context for Claude Code: Recursive Creator Project
@@ -1933,25 +1951,18 @@ Right now, it is: https://channels.recursive.eco/?doc_id=f37a5678-aeaf-46f3-81a0
 I think it need to start with this for Supabase to recognize the right channel when publishing, what do you think?
 https://channels.recursive.eco/channels/kids-stories
 
+You changed the URl and I tested the new feature and the redirect to channels is working, but the modal for subnission is not poping up or pre filling. 
+
 **Phase 8.2: Submit to Community Button** 🔄 NEXT (Test workflow FIRST)
 3. ⏳ Add "Submit to Community" success modal in creator
 4. ⏳ Verify channels submit form accepts query params
 5. ⏳ Test full workflow: publish → submit → appears in channels
    - **Goal:** Ensure basic workflow works before adding restrictions
 
-**Phase 8.3: Link Validation** (AFTER 8.2 works)
-6. ⏳ Add link validation to channels (allow multiple trusted domains)
-   - **Allowed domains:**
-     - `recursive.eco` (all subdomains)
-     - `goodreads.com`
-     - `claude.ai`
-     - `chatgpt.com` / `openai.com`
-     - `amazon.com`
-   - **Rationale:** Support content curation from trusted platforms
-   - Show helpful error if domain not allowed - provide contact pp@playfulprocess to ask for a different domain to be included 
+
 
 **Phase 8.4: CTA Banner** (Later)
-7. ⏳ Add CTA banner to viewer
+7. ⏳ Add CTA banner to viewer linking to creator page - something discrete but visible with something like "create your  own content sequences" 
 8. ⏳ Hide CTA when viewing own content - This is not necessary, we can add the CTA always with cleaner code 
 
 **Phase 8.5: Testing & Refinement**
@@ -3919,7 +3930,7 @@ if (youtubeId) {
 4. Enhancement #1 - Add play/pause button to recursive-landing
 5. Enhancement #2 - Add timeline scrubbing controls
 6. Fix #1 - Fix fullscreen YouTube sizing
-7. Fix #3 - Fix content area bottom cut-off
+7. Fix #3 - Fix content area bottom cut-off (no longer true)
 
 ---
 
