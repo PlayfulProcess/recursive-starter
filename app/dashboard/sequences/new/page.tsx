@@ -340,6 +340,46 @@ function NewSequencePageContent() {
     }
   };
 
+  const handleImportPlaylist = async () => {
+    if (!playlistUrl.trim()) {
+      setPlaylistError('Please enter a playlist URL');
+      return;
+    }
+
+    setImportingPlaylist(true);
+    setPlaylistError(null);
+
+    try {
+      const response = await fetch('/api/extract-playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playlistUrl })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import playlist');
+      }
+
+      // Auto-populate bulk textarea with video URLs
+      const videoUrls = data.videos.map((v: any) => v.url).join('\n');
+      setBulkUrls(videoUrls);
+
+      // Close modal
+      setShowPlaylistModal(false);
+      setPlaylistUrl('');
+
+      // Show success message
+      setError(`✅ Imported ${data.count} videos from playlist! Click "Update Sidebar" to add them.`);
+
+    } catch (err: any) {
+      setPlaylistError(err.message || 'Failed to import playlist');
+    } finally {
+      setImportingPlaylist(false);
+    }
+  };
+
   const handleReorderItem = (currentIndex: number, newPosition: number) => {
     const pos = parseInt(String(newPosition));
 
@@ -661,6 +701,13 @@ function NewSequencePageContent() {
                     title="Import all files from a Drive folder"
                   >
                     📁 Import Folder
+                  </button>
+                  <button
+                    onClick={() => setShowPlaylistModal(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap"
+                    title="Import all videos from a YouTube playlist"
+                  >
+                    🎬 Import Playlist
                   </button>
                 </div>
               </div>
@@ -1052,6 +1099,72 @@ function NewSequencePageContent() {
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {importing ? 'Importing...' : 'Import Files'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import YouTube Playlist Modal */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-white">Import YouTube Playlist</h3>
+              <button
+                onClick={() => {
+                  setShowPlaylistModal(false);
+                  setPlaylistUrl('');
+                  setPlaylistError(null);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  YouTube Playlist URL
+                </label>
+                <input
+                  type="text"
+                  value={playlistUrl}
+                  onChange={(e) => setPlaylistUrl(e.target.value)}
+                  placeholder="https://youtube.com/playlist?list=PLxxx..."
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  autoFocus
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Paste a YouTube playlist URL to import all videos (max 50)
+                </p>
+              </div>
+
+              {playlistError && (
+                <div className="px-4 py-3 bg-red-900/20 border border-red-500 rounded-lg text-red-400 text-sm">
+                  {playlistError}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPlaylistModal(false);
+                    setPlaylistUrl('');
+                    setPlaylistError(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportPlaylist}
+                  disabled={importingPlaylist || !playlistUrl.trim()}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {importingPlaylist ? 'Importing...' : 'Import Videos'}
                 </button>
               </div>
             </div>
