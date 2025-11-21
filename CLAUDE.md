@@ -1,3 +1,53 @@
+# Phase 9: YouTube Playlist Import - COMPLETE ✅ (2025-11-21)
+
+## Implementation Summary:
+
+**Goal:** Allow batch import of all videos from a YouTube playlist URL (up to 50 videos)
+
+**What Was Built:**
+
+1. **Backend API Route** - `/api/extract-playlist/route.ts`
+   - Uses YouTube Data API v3 with `GOOGLE_DRIVE_API_KEY`
+   - Extracts playlist ID from various URL formats
+   - Fetches up to 50 videos per playlist
+   - Returns video IDs, titles, URLs, and thumbnails
+   - Error handling for private playlists, invalid URLs, API quota
+
+2. **Frontend State & Handler** - `app/dashboard/sequences/new/page.tsx`
+   - State: `showPlaylistModal`, `playlistUrl`, `importingPlaylist`, `playlistError`
+   - Handler: `handleImportPlaylist()` function (lines 343-381)
+   - Auto-populates bulk textarea with video URLs on success
+
+3. **UI Components**
+   - 🎬 Import Playlist button (red) next to Drive folder button (lines 705-711)
+   - YouTube Playlist Import modal (lines 1109-1173)
+   - Matches Drive folder modal pattern
+
+**User Flow:**
+1. Click "🎬 Import Playlist" → Modal opens
+2. Paste playlist URL (e.g., `https://youtube.com/playlist?list=PLxxx...`)
+3. Click "Import Videos" → Backend fetches videos
+4. Bulk textarea auto-populated with video URLs
+5. Click "Update Sidebar" → Videos added to sequence
+
+**Testing Results:**
+- ✅ Successfully imports public playlists
+- ✅ Displays helpful error messages for invalid URLs
+- ✅ Handles API quota exceeded errors
+- ✅ Max 50 videos per playlist (YouTube API limit)
+
+**Environment Variable:**
+- Uses `GOOGLE_DRIVE_API_KEY` (same as Drive folder import)
+- Both Drive API and YouTube Data API use same Google Cloud API key
+
+**Commits:**
+- 1c70de9 - "feat(Phase 9): Add YouTube Playlist Import UI - button and modal"
+- bf4df05 - "fix: Use same API key env var for both Drive and YouTube APIs"
+
+**Branch:** `feature/publishing-workflow-20251119`
+
+---
+
 # Phase 11 Fixes Completed (2025-11-20)
 
 ## ✅ Fixes Successfully Merged to Main:
@@ -29,10 +79,11 @@
 
 # Context for Claude Code: Recursive Creator Project
 
-> **Last Updated:** 2025-11-13 (Session 11 - Phase 7 Complete & Deployed!)
-> **Current Phase:** Phase 7 COMPLETE - Drive Folder Import Live in Production
-> **Status:** All phases complete, unified sequence creator deployed and tested on Vercel
-> **Next Steps:** Production use, gather user feedback, iterate on features
+> **Last Updated:** 2025-11-21 (Session 12 - Phase 9 Complete!)
+> **Current Phase:** Phase 9 COMPLETE - YouTube Playlist Import Working
+> **Working Branch:** `feature/publishing-workflow-20251119`
+> **Status:** Phase 9 complete, now fixing Phase 8.2 (channel submission pre-fill)
+> **Next Steps:** Fix channel submission modal, add channel selection, then merge to main
 
 ---
 
@@ -1679,24 +1730,135 @@ const [licenseAgreed, setLicenseAgreed] = useState(false);
 
 ---
 
-### Phase 8.2: Submit to Community Button (Week 1) 🔄 CURRENT
+### Phase 8.2: Submit to Community Button (Week 1) 🔄 IN PROGRESS
 
-**Goal:** Test the publish → submit → channels workflow BEFORE adding link restrictions
+**Current Status:** Phase 8.2 submit button exists but has issues that need fixing
 
-**Strategy:** Pre-fill channels submission form from creator success modal
+**Issues Found (2025-11-21):**
 
-**Why This Order:**
-- ✅ Test happy path first (make sure workflow works)
-- ✅ Then add restrictions (link validation)
-- ✅ Avoid debugging workflow issues while also dealing with validation errors
+1. **Pre-fill Modal Not Opening**
+   - Submit button redirects to channels.recursive.eco with query params
+   - Modal in channels app is not opening/pre-filling with the data
+   - URL format: `https://channels.recursive.eco/channels/kids-stories?link=...&title=...&description=...`
+   - Need to investigate channels app to fix modal trigger
+
+2. **Missing Channel Selection**
+   - Currently hardcoded to "kids-stories" channel
+   - Need intermediary step to let user choose which channel to submit to
+   - Should show list of available channels before redirecting
+
+**Current Implementation Location:**
+- File: `recursive-creator/app/dashboard/sequences/new/page.tsx`
+- Lines: 975-1018 (success modal with submit button)
+- Current URL: Line 1005
 
 ---
 
-#### **Implementation: Pre-filled Submission Flow**
+#### **NEW PLAN: Fix Submission + Add Channel Selection**
+
+**Step 1: Investigate Channels App Modal Issue** (20 min)
+- Check `recursive-channels-fresh` for how submit modal works
+- Find where query params should trigger modal opening
+- Identify why pre-fill is not working
+- Fix modal trigger and pre-fill logic
+
+**Step 2: Add Channel Selection Modal** (40 min)
+- Create new modal in recursive-creator that shows BEFORE redirecting
+- Fetch available channels from recursive-channels-fresh
+- Display channel options (Kids Stories, Wellness, etc.)
+- User selects channel → then redirect with pre-filled data
+
+**Step 3: Update Submit Button Flow** (10 min)
+- Change "Submit to Community Stories" button to "Submit to Channel"
+- On click, open channel selection modal (don't redirect immediately)
+- After channel selected, redirect to that channel's submit page
+
+---
+
+#### **Implementation Details:**
+
+**A) Channel Selection Modal UI** (recursive-creator)
+
+```tsx
+// Add state
+const [showChannelSelectModal, setShowChannelSelectModal] = useState(false);
+const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+
+// Available channels (can fetch from API later)
+const AVAILABLE_CHANNELS = [
+  { id: 'kids-stories', name: 'Kids Stories', description: 'Children\'s books, educational content' },
+  { id: 'wellness', name: 'Wellness', description: 'Mental health, mindfulness, self-care' },
+  { id: 'learning', name: 'Learning', description: 'Educational resources, tutorials' },
+];
+
+// Modal component
+{showChannelSelectModal && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-semibold text-white">Select a Channel</h3>
+        <button
+          onClick={() => setShowChannelSelectModal(false)}
+          className="text-gray-400 hover:text-white"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p className="text-gray-300 mb-6">
+        Choose which community channel to submit your content to:
+      </p>
+
+      <div className="space-y-3">
+        {AVAILABLE_CHANNELS.map((channel) => (
+          <button
+            key={channel.id}
+            onClick={() => {
+              setSelectedChannel(channel.id);
+              // Redirect to channels app with pre-fill
+              const submitUrl = `https://channels.recursive.eco/channels/${channel.id}?link=${encodeURIComponent(publishedUrl)}&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description || '')}`;
+              window.open(submitUrl, '_blank');
+              setShowChannelSelectModal(false);
+            }}
+            className="w-full text-left p-4 bg-gray-700 hover:bg-gray-600 rounded-lg border border-gray-600 hover:border-purple-500 transition-all"
+          >
+            <h4 className="font-semibold text-white mb-1">{channel.name}</h4>
+            <p className="text-sm text-gray-400">{channel.description}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+```
+
+**B) Update Submit Button** (recursive-creator)
+
+```tsx
+{/* Change from direct link to button that opens modal */}
+<button
+  onClick={() => setShowChannelSelectModal(true)}
+  className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+>
+  📢 Submit to Channel →
+</button>
+```
+
+**C) Fix Channels App Modal** (recursive-channels-fresh)
+
+Need to investigate:
+- Where is the submit modal in channels app?
+- How does it detect query params and pre-fill?
+- Is there a missing event listener or state initialization?
+- Does modal auto-open when query params are present?
+
+---
+
+#### **OLD Implementation (For Reference)**
 
 **File:** `recursive-creator/app/dashboard/sequences/new/page.tsx`
 
-Add after successful publish:
+Current code that needs updating:
 
 ```tsx
 {/* Success message with channel submission */}
