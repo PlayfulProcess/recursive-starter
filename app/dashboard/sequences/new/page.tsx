@@ -55,8 +55,18 @@ function NewSequencePageContent() {
   const [importingPlaylist, setImportingPlaylist] = useState(false);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
 
+  // Channel selection modal
+  const [showChannelSelectModal, setShowChannelSelectModal] = useState(false);
+
   // License agreement
   const [licenseAgreed, setLicenseAgreed] = useState(false);
+
+  // Available channels for submission
+  const AVAILABLE_CHANNELS = [
+    { id: 'kids-stories', name: 'Kids Stories', description: 'Children\'s books, educational content, family-friendly videos' },
+    { id: 'wellness', name: 'Wellness', description: 'Mental health, mindfulness, self-care resources' },
+    { id: 'learning', name: 'Learning', description: 'Educational resources, tutorials, skill-building content' },
+  ];
 
   // Load sequence data when editing
   useEffect(() => {
@@ -1001,14 +1011,12 @@ function NewSequencePageContent() {
                     💡 You can also share links from trusted sources like Goodreads (book recommendations),
                     Claude/ChatGPT (AI tools), Amazon (products), or Google Drive (shared files).
                   </p>
-                  <a
-                    href={`https://channels.recursive.eco/channels/kids-stories?doc_id=${publishedDocId}&channel=kids-stories`}
-                    target="_blank"
-                    rel="noopener"
+                  <button
+                    onClick={() => setShowChannelSelectModal(true)}
                     className="inline-block px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
                   >
-                    Submit to Community Stories →
-                  </a>
+                    📢 Submit to Channel →
+                  </button>
                   <p className="text-xs text-gray-500 mt-2">
                     Opens in channels.recursive.eco with your content pre-filled.
                     You can review before submitting.
@@ -1167,6 +1175,43 @@ function NewSequencePageContent() {
                   {importingPlaylist ? 'Importing...' : 'Import Videos'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Channel Selection Modal */}
+      {showChannelSelectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-white">Select a Channel</h3>
+              <button
+                onClick={() => setShowChannelSelectModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Choose which community channel to submit your content to:
+            </p>
+
+            <div className="space-y-3">
+              {AVAILABLE_CHANNELS.map((channel) => (
+                <a
+                  key={channel.id}
+                  href={`https://channels.recursive.eco/channels/${channel.id}?doc_id=${publishedDocId}&channel=${channel.id}`}
+                  target="_blank"
+                  rel="noopener"
+                  onClick={() => setShowChannelSelectModal(false)}
+                  className="block w-full text-left p-4 bg-gray-700 hover:bg-gray-600 rounded-lg border border-gray-600 hover:border-purple-500 transition-all"
+                >
+                  <h4 className="font-semibold text-white mb-1">{channel.name}</h4>
+                  <p className="text-sm text-gray-400">{channel.description}</p>
+                </a>
+              ))}
             </div>
           </div>
         </div>
