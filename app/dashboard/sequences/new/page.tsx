@@ -206,6 +206,7 @@ function NewSequencePageContent() {
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
       /youtube\.com\/shorts\/([^&\n?#]+)/,  // YouTube Shorts support
+      /youtubekids\.com\/watch\?v=([^&\n?#]+)/,  // YouTube Kids support
       /^([a-zA-Z0-9_-]{11})$/
     ];
 
@@ -234,8 +235,8 @@ function NewSequencePageContent() {
       return { type: 'image', processedUrl: imagePrefixMatch[1].trim() };
     }
 
-    // YouTube detection
-    if (trimmedUrl.includes('youtube.com') || trimmedUrl.includes('youtu.be')) {
+    // YouTube detection (including YouTube Kids)
+    if (trimmedUrl.includes('youtube.com') || trimmedUrl.includes('youtu.be') || trimmedUrl.includes('youtubekids.com')) {
       return { type: 'video', processedUrl: trimmedUrl };
     }
 
@@ -270,8 +271,8 @@ function NewSequencePageContent() {
       const { type, processedUrl } = detectUrlType(line);
 
       if (type === 'video') {
-        // Check if it's YouTube or Drive
-        if (processedUrl.includes('youtube.com') || processedUrl.includes('youtu.be')) {
+        // Check if it's YouTube (including Kids) or Drive
+        if (processedUrl.includes('youtube.com') || processedUrl.includes('youtu.be') || processedUrl.includes('youtubekids.com')) {
           const videoId = extractYouTubeId(processedUrl);
           newItems.push({
             position: index + 1,
@@ -770,9 +771,9 @@ function NewSequencePageContent() {
                                   // Extract Drive file ID as identifier
                                   const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
                                   return idMatch ? `Drive: ${idMatch[1].substring(0, 12)}...` : 'Drive file';
-                                } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                                  // For YouTube, show video ID
-                                  const videoIdMatch = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                } else if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('youtubekids.com')) {
+                                  // For YouTube (including Kids), show video ID
+                                  const videoIdMatch = url.match(/(?:v=|youtu\.be\/|youtubekids\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
                                   return videoIdMatch ? `YT: ${videoIdMatch[1]}` : 'YouTube';
                                 } else {
                                   // Try to get filename from URL path
