@@ -55,6 +55,9 @@ function NewSequencePageContent() {
   const [importingPlaylist, setImportingPlaylist] = useState(false);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
 
+  // Store video metadata (URL → title mapping) from YouTube API
+  const [videoMetadata, setVideoMetadata] = useState<Map<string, string>>(new Map());
+
   // Channel selection modal
   const [showChannelSelectModal, setShowChannelSelectModal] = useState(false);
 
@@ -265,6 +268,7 @@ function NewSequencePageContent() {
     }
 
     const newItems: SequenceItem[] = [];
+    const startPosition = items.length; // Start positions after existing items
 
     lines.forEach((line, index) => {
       const { type, processedUrl } = detectUrlType(line);
@@ -273,18 +277,20 @@ function NewSequencePageContent() {
         // Check if it's YouTube or Drive
         if (processedUrl.includes('youtube.com') || processedUrl.includes('youtu.be')) {
           const videoId = extractYouTubeId(processedUrl);
+          // Check if we have title metadata from YouTube API import
+          const title = videoMetadata.get(processedUrl) || '';
           newItems.push({
-            position: index + 1,
+            position: startPosition + index + 1,
             type: 'video',
             video_id: videoId,
             url: processedUrl,
-            title: ''
+            title: title
           });
         } else if (processedUrl.includes('drive.google.com')) {
           // Drive video
           const driveId = convertGoogleDriveVideoUrl(processedUrl);
           newItems.push({
-            position: index + 1,
+            position: startPosition + index + 1,
             type: 'video',
             video_id: driveId,  // Drive file ID
             url: processedUrl,
@@ -297,7 +303,7 @@ function NewSequencePageContent() {
       } else {
         const convertedUrl = convertGoogleDriveUrl(processedUrl);
         newItems.push({
-          position: index + 1,
+          position: startPosition + index + 1,
           type: 'image',
           image_url: convertedUrl,
           alt_text: '',
@@ -306,8 +312,8 @@ function NewSequencePageContent() {
       }
     });
 
-    // REPLACE items completely (don't add to existing)
-    setItems(newItems);
+    // APPEND new items to existing items
+    setItems(prev => [...prev, ...newItems]);
     setError(null);
   };
 
@@ -333,8 +339,9 @@ function NewSequencePageContent() {
         throw new Error(data.error || 'Failed to import folder');
       }
 
-      // Auto-populate bulk textarea with imported URLs
-      setBulkUrls(data.urls.join('\n'));
+      // Append imported URLs to existing content
+      const newUrls = data.urls.join('\n');
+      setBulkUrls(prev => prev ? `${prev}\n${newUrls}` : newUrls);
 
       // Close modal
       setShowImportModal(false);
@@ -372,9 +379,16 @@ function NewSequencePageContent() {
         throw new Error(data.error || 'Failed to import playlist');
       }
 
-      // Auto-populate bulk textarea with video URLs
+      // Store video metadata (URL → title mapping) for later use
+      const newMetadata = new Map(videoMetadata);
+      data.videos.forEach((v: any) => {
+        newMetadata.set(v.url, v.title);
+      });
+      setVideoMetadata(newMetadata);
+
+      // Append video URLs to existing content
       const videoUrls = data.videos.map((v: any) => v.url).join('\n');
-      setBulkUrls(videoUrls);
+      setBulkUrls(prev => prev ? `${prev}\n${videoUrls}` : videoUrls);
 
       // Close modal
       setShowPlaylistModal(false);
@@ -900,21 +914,24 @@ function NewSequencePageContent() {
                   📖 Publishing Your Content
                 </h3>
                 <p className="text-gray-300 text-sm mb-4">
-                  When you publish, all <strong>original content you create</strong>{' '}
-                  (images, text, narration) will be licensed under{' '}
-                  <a
-                    href="https://creativecommons.org/licenses/by-sa/4.0/"
-                    target="_blank"
-                    rel="noopener"
-                    className="text-purple-400 hover:text-purple-300 underline font-semibold"
-                  >
-                    Creative Commons BY-SA 4.0
-                  </a>.
+                  When you publish, content will be attributed as follows:
                 </p>
-                <p className="text-gray-300 text-sm mb-4">
-                  If you include links to external content (like YouTube videos),
-                  those remain under their original creators' terms—you're simply
-                  curating a collection.
+                <ul className="text-gray-300 text-sm mb-4 space-y-2 list-disc list-inside">
+                  <li><strong>YouTube videos</strong> remain under their original creators' licenses (you're curating, not claiming ownership)</li>
+                  <li><strong>Images with visible attribution/license</strong> remain under their specified license</li>
+                  <li><strong>All other content</strong> (your original images, text, narration) will be licensed under{' '}
+                    <a
+                      href="https://creativecommons.org/licenses/by-sa/4.0/"
+                      target="_blank"
+                      rel="noopener"
+                      className="text-purple-400 hover:text-purple-300 underline font-semibold"
+                    >
+                      Creative Commons BY-SA 4.0
+                    </a>
+                  </li>
+                </ul>
+                <p className="text-gray-300 text-sm mb-4 italic">
+                  Without direct attribution to YouTube or another license, content will be assumed to be published under Creative Commons BY-SA 4.0.
                 </p>
 
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -925,8 +942,7 @@ function NewSequencePageContent() {
                     className="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                   />
                   <span className="text-sm text-gray-300">
-                    I confirm that I own or have permission to use all original content
-                    in this project, and I agree to license it under CC BY-SA 4.0.
+                    I confirm that all content not coming from YouTube or specifically attributed under another license can be published under CC BY-SA 4.0. I own or have permission to use all such content.
                     I have read the{' '}
                     <a
                       href="https://recursive.eco/pages/about.html#terms"
