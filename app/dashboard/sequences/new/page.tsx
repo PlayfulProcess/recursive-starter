@@ -42,6 +42,7 @@ function NewSequencePageContent() {
   const [isPublished, setIsPublished] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [publishedDocId, setPublishedDocId] = useState<string | null>(null);
+  const [isReported, setIsReported] = useState(false); // Track if content has been reported
 
   // Drive folder import modal
   const [showImportModal, setShowImportModal] = useState(false);
@@ -54,6 +55,9 @@ function NewSequencePageContent() {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [importingPlaylist, setImportingPlaylist] = useState(false);
   const [playlistError, setPlaylistError] = useState<string | null>(null);
+
+  // Store video metadata (URL → title mapping) from YouTube API
+  const [videoMetadata, setVideoMetadata] = useState<Map<string, string>>(new Map());
 
   // Channel selection modal
   const [showChannelSelectModal, setShowChannelSelectModal] = useState(false);
@@ -93,6 +97,10 @@ function NewSequencePageContent() {
       // Check if published (from document_data.is_published)
       const isPublishedValue = data.document_data.is_published === 'true';
       setIsPublished(isPublishedValue);
+
+      // Check if reported (blocks re-publishing)
+      const isReportedValue = data.reported === true;
+      setIsReported(isReportedValue);
 
       // Set published URL and doc ID if published
       if (isPublishedValue) {
@@ -266,6 +274,7 @@ function NewSequencePageContent() {
     }
 
     const newItems: SequenceItem[] = [];
+    const startPosition = items.length; // Start positions after existing items
 
     lines.forEach((line, index) => {
       const { type, processedUrl } = detectUrlType(line);
@@ -274,18 +283,20 @@ function NewSequencePageContent() {
         // Check if it's YouTube (including Kids) or Drive
         if (processedUrl.includes('youtube.com') || processedUrl.includes('youtu.be') || processedUrl.includes('youtubekids.com')) {
           const videoId = extractYouTubeId(processedUrl);
+          // Check if we have title metadata from YouTube API import
+          const title = videoMetadata.get(processedUrl) || '';
           newItems.push({
-            position: index + 1,
+            position: startPosition + index + 1,
             type: 'video',
             video_id: videoId,
             url: processedUrl,
-            title: ''
+            title: title
           });
         } else if (processedUrl.includes('drive.google.com')) {
           // Drive video
           const driveId = convertGoogleDriveVideoUrl(processedUrl);
           newItems.push({
-            position: index + 1,
+            position: startPosition + index + 1,
             type: 'video',
             video_id: driveId,  // Drive file ID
             url: processedUrl,
@@ -298,7 +309,7 @@ function NewSequencePageContent() {
       } else {
         const convertedUrl = convertGoogleDriveUrl(processedUrl);
         newItems.push({
-          position: index + 1,
+          position: startPosition + index + 1,
           type: 'image',
           image_url: convertedUrl,
           alt_text: '',
@@ -307,8 +318,8 @@ function NewSequencePageContent() {
       }
     });
 
-    // REPLACE items completely (don't add to existing)
-    setItems(newItems);
+    // APPEND new items to existing items
+    setItems(prev => [...prev, ...newItems]);
     setError(null);
   };
 
@@ -334,8 +345,9 @@ function NewSequencePageContent() {
         throw new Error(data.error || 'Failed to import folder');
       }
 
-      // Auto-populate bulk textarea with imported URLs
-      setBulkUrls(data.urls.join('\n'));
+      // Append imported URLs to existing content
+      const newUrls = data.urls.join('\n');
+      setBulkUrls(prev => prev ? `${prev}\n${newUrls}` : newUrls);
 
       // Close modal
       setShowImportModal(false);
@@ -373,9 +385,16 @@ function NewSequencePageContent() {
         throw new Error(data.error || 'Failed to import playlist');
       }
 
-      // Auto-populate bulk textarea with video URLs
+      // Store video metadata (URL → title mapping) for later use
+      const newMetadata = new Map(videoMetadata);
+      data.videos.forEach((v: any) => {
+        newMetadata.set(v.url, v.title);
+      });
+      setVideoMetadata(newMetadata);
+
+      // Append video URLs to existing content
       const videoUrls = data.videos.map((v: any) => v.url).join('\n');
-      setBulkUrls(videoUrls);
+      setBulkUrls(prev => prev ? `${prev}\n${videoUrls}` : videoUrls);
 
       // Close modal
       setShowPlaylistModal(false);
@@ -894,28 +913,53 @@ function NewSequencePageContent() {
               </div>
             )}
 
+            {/* Warning message for reported content */}
+            {isReported && (
+              <div className="bg-red-900/50 border border-red-700 rounded-lg p-6 mb-6">
+                <h3 className="text-lg font-semibold text-red-200 mb-3 flex items-center gap-2">
+                  <span>⚠️</span> Content Reported
+                </h3>
+                <p className="text-red-200 mb-3">
+                  This content has been reported by a viewer and cannot be published until reviewed by an administrator.
+                </p>
+                <p className="text-red-200 text-sm">
+                  If you believe this was done in error, please email{' '}
+                  <a
+                    href="mailto:pp@playfulprocess.com"
+                    className="text-red-300 hover:text-red-100 underline font-semibold"
+                  >
+                    pp@playfulprocess.com
+                  </a>
+                  {' '}to appeal.
+                </p>
+              </div>
+            )}
+
             {/* License Agreement - Show before publishing */}
-            {!isPublished && (
+            {!isPublished && !isReported && (
               <div className="bg-purple-900/30 border border-purple-700/50 rounded-lg p-6 mb-6">
                 <h3 className="text-lg font-semibold text-white mb-3">
                   📖 Publishing Your Content
                 </h3>
                 <p className="text-gray-300 text-sm mb-4">
-                  When you publish, all <strong>original content you create</strong>{' '}
-                  (images, text, narration) will be licensed under{' '}
-                  <a
-                    href="https://creativecommons.org/licenses/by-sa/4.0/"
-                    target="_blank"
-                    rel="noopener"
-                    className="text-purple-400 hover:text-purple-300 underline font-semibold"
-                  >
-                    Creative Commons BY-SA 4.0
-                  </a>.
+                  When you publish, content will be attributed as follows:
                 </p>
-                <p className="text-gray-300 text-sm mb-4">
-                  If you include links to external content (like YouTube videos),
-                  those remain under their original creators' terms—you're simply
-                  curating a collection.
+                <ul className="text-gray-300 text-sm mb-4 space-y-2 list-disc list-inside">
+                  <li><strong>YouTube videos</strong> remain under their original creators' licenses (you're curating, not claiming ownership)</li>
+                  <li><strong>Images with visible attribution/license</strong> remain under their specified license</li>
+                  <li><strong>All other content</strong> (your original images, text, narration) will be licensed under{' '}
+                    <a
+                      href="https://creativecommons.org/licenses/by-sa/4.0/"
+                      target="_blank"
+                      rel="noopener"
+                      className="text-purple-400 hover:text-purple-300 underline font-semibold"
+                    >
+                      Creative Commons BY-SA 4.0
+                    </a>
+                  </li>
+                </ul>
+                <p className="text-gray-300 text-sm mb-4 italic">
+                  Without direct attribution to YouTube or another license on the content itself, content will be assumed to be published under Creative Commons BY-SA 4.0.
                 </p>
 
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -926,8 +970,7 @@ function NewSequencePageContent() {
                     className="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                   />
                   <span className="text-sm text-gray-300">
-                    I confirm that I own or have permission to use all original content
-                    in this project, and I agree to license it under CC BY-SA 4.0.
+                    I confirm that all content not coming from YouTube or specifically attributed under another license can be published under CC BY-SA 4.0. I own or have permission to use all such content.
                     I have read the{' '}
                     <a
                       href="https://recursive.eco/pages/about.html#terms"
@@ -953,7 +996,7 @@ function NewSequencePageContent() {
 
               <button
                 onClick={() => handleSaveDraft(true)}  // Force to published mode
-                disabled={saving || !title.trim() || items.length === 0 || !licenseAgreed}
+                disabled={saving || !title.trim() || items.length === 0 || !licenseAgreed || isReported}
                 className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? 'Publishing...' : (editingId && isPublished ? 'Update Published' : '🌐 Publish')}
