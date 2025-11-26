@@ -4,6 +4,18 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Allow all origins (or specify: 'https://dev.recursive.eco, https://recursive.eco')
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { documentId, reportType, explanation, viewerUrl } = await request.json();
@@ -12,14 +24,14 @@ export async function POST(request: NextRequest) {
     if (!documentId) {
       return NextResponse.json(
         { error: 'Document ID is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (reportType === 'unpublish' && (!explanation || explanation.length < 50)) {
       return NextResponse.json(
         { error: 'Explanation must be at least 50 characters when unpublishing' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -36,7 +48,7 @@ export async function POST(request: NextRequest) {
       console.error('Document not found:', docError);
       return NextResponse.json(
         { error: 'Document not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -73,7 +85,7 @@ export async function POST(request: NextRequest) {
       console.error('Error updating document:', updateError);
       return NextResponse.json(
         { error: 'Failed to update document' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -164,13 +176,13 @@ export async function POST(request: NextRequest) {
       message: reportType === 'unpublish'
         ? 'Content has been unpublished and reported. Thank you for keeping our community safe.'
         : 'Report submitted. We will review this content. Thank you.',
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Report content error:', error);
     return NextResponse.json(
       { error: 'Failed to process report' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
