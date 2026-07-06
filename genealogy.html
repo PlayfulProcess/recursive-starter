@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="theme.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{CHANNEL_NAME}} — Genealogy Graph</title>
+<!--
+  Self-contained visual catalogue for this repo's grammars.
+  - No build, no server needed to VIEW: a single file + the NODES/EDGES data below.
+  - TEMPLATE NOTE: recursive-tarot's version of this page reads a generated
+    "meta grammar" (built by a Python script) for its node data. That pipeline
+    is tarot-specific tooling, out of scope for a starter template — so this
+    version keeps the same Cytoscape.js rendering + interaction, but the data
+    source is the small NODES / EDGES arrays below, which you hand-author (or
+    generate however you like). Fill them in to place your own grammars on the
+    graph — REPLACE-ME markers show where.
+  - Honest edges: a genealogy graph is a simplified lineage/relatedness map,
+    NOT a claim of exact item-to-item derivation. Say so in your own note below
+    if your domain's history is contested (most are).
+  Companion to recursive.eco (the rich integrated reader); this is the
+  fork-it-yourself, static view of the repo's own data.
+-->
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<style>
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,sans-serif; }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; font-weight:600; }
+  header h1 a { color:inherit; text-decoration:none; }
+  header .sub { color:var(--muted); font-size:13px; }
+  header .controls { margin-left:auto; display:flex; gap:10px; align-items:center; font-size:13px; }
+  button.toggle { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:5px 10px; cursor:pointer; }
+  button.toggle.active { background:var(--gold); border-color:var(--gold); color:#fff; }
+  #wrap { display:flex; height:calc(100% - 56px); }
+  #cy { flex:1; height:100%; }
+  #panel { width:330px; border-left:1px solid var(--line); padding:16px; overflow:auto; background:var(--panel); }
+  #panel h2 { font-size:16px; margin:0 0 6px; }
+  #panel .row { font-size:13px; color:var(--muted); margin:3px 0; }
+  #panel .row b { color:var(--ink); font-weight:600; }
+  #panel a { color:var(--gold); }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .dot { width:11px; height:11px; border-radius:50%; display:inline-block; }
+  .empty { color:var(--muted); font-size:13px; }
+  .note { font-size:11px; color:var(--muted); padding:6px 18px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<script src="site-header.js?v=1"></script>
+<site-header active="genealogy"></site-header>
+<header>
+  <div>
+    <h1>Genealogy Graph</h1>
+    <div class="sub">REPLACE-ME: one line describing what relates these nodes (date × lineage? influence? shared source?). Click a node.</div>
+  </div>
+  <div class="controls">
+    <script src="view-switcher.js?v=1"></script>
+    <view-switcher active="genealogy"></view-switcher>
+    <span>Colour by:</span>
+    <button class="toggle active" id="byTier">Lineage</button>
+    <button class="toggle" id="byFunction">Function</button>
+  </div>
+</header>
+<div id="wrap">
+  <div id="cy"></div>
+  <aside id="panel"><div class="empty">Loading the catalogue…</div></aside>
+</div>
+<div class="note">Edges are a simplified relatedness map, not a claim of exact node-to-node derivation. Data: the NODES/EDGES arrays inlined in this page's &lt;script&gt; — REPLACE-ME with your own grammars' data.</div>
+<script>
+// ── REPLACE-ME: your genealogy data ──────────────────────────────────────
+// One entry per grammar (or per notable item within a grammar) you want on
+// the map. `tier` buckets nodes into vertical lanes (see TIER_LANE below) and
+// drives the "Lineage" colour mode; `function` drives the "Function" colour
+// mode. `slug` is optional — if set and it matches a folder under grammars/,
+// the panel links to that grammar's raw JSON.
+const NODES = [
+  { node_id: 'n1', label: 'REPLACE-ME: Example Grammar', date: '2026', tier: 'root', function: 'reference',
+    slug: 'example-grammar', count: 3 },
+  // { node_id: 'n2', label: 'Another Grammar', date: 'c. 1850', tier: 'descendant', function: 'practice',
+  //   slug: 'another-grammar-slug', count: 40 },
+];
+// One entry per relationship: { source: node_id, target: node_id, turn?: true }.
+// `turn` marks an especially notable transition (rendered as a dashed line).
+const EDGES = [
+  // { source: 'n1', target: 'n2' },
+];
+// ──────────────────────────────────────────────────────────────────────────
+
+const TIER = { root:'#9a7322', ancestral:'#c9a227', descendant:'#5c6bc0', cousin:'#8d99ae', turn:'#9c47d1' };
+const TIER_NAME = { root:'Root / origin', ancestral:'Ancestral', descendant:'Descendant', cousin:'Cousin (not a parent)', turn:'Notable transition' };
+const TIER_LANE = { root:0, ancestral:0, cousin:0, descendant:1, turn:2 };
+const FUNC = { reference:'#3aa3a0', practice:'#c9a227', origin:'#c0556f', variant:'#7e57c2' };
+const FUNC_NAME = { reference:'Reference', practice:'Practice', origin:'Origin', variant:'Variant' };
+
+function parseYear(s){
+  s = String(s||'');
+  let m = s.match(/(\d{4})/); if(m) return +m[1];
+  m = s.match(/(\d{1,2})\s*(?:th|st|nd|rd)?\s*[–-]?\s*(?:\d{1,2}\s*(?:th|st|nd|rd)?)?\s*c/i);
+  if(m) return (+m[1]-1)*100 + 50;
+  return 2000;
+}
+const yearOf = d => d.timeline_year || parseYear(d.date);
+function activeMode(){ return document.getElementById('byFunction').classList.contains('active') ? 'function' : 'tier'; }
+function legendHTML(mode){
+  const map = mode==='function' ? FUNC : TIER, names = mode==='function' ? FUNC_NAME : TIER_NAME;
+  return Object.keys(map).map(k => `<span><i class="dot" style="background:${map[k]}"></i>${names[k]}</span>`).join('');
+}
+
+(function(){
+  const panel = document.getElementById('panel');
+  const nodesData = NODES.map(d => ({...d, year: yearOf(d)}));
+  if(!nodesData.length){ panel.innerHTML = '<div class="empty">No nodes yet — fill in the NODES array in this page\'s &lt;script&gt;.</div>'; return; }
+
+  const years = nodesData.map(d=>d.year);
+  const minY = Math.min(...years), maxY = Math.max(...years);
+  const W = Math.max(900, document.getElementById('cy').clientWidth - 120);
+  const xOf = y => 50 + (maxY===minY ? W/2 : (y-minY)/(maxY-minY))*W;
+  const yOf = tier => 80 + (TIER_LANE[tier] ?? 1) * 120;
+
+  const nodes = nodesData.map(d => ({ data:{ id:d.node_id, label:d.label, ...d }, position:{ x:xOf(d.year), y:yOf(d.tier) } }));
+  const edges = EDGES.map((e,i) => ({ data:{ id:'e'+i, source:e.source, target:e.target, turn: e.turn ? 1 : undefined } }));
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: { nodes, edges },
+    layout: { name:'preset' },
+    style: [
+      { selector:'node', style:{ 'label':'data(label)', 'color':'#221f1a', 'font-size':'11px',
+        'text-wrap':'wrap', 'text-max-width':'120px', 'text-valign':'bottom', 'text-margin-y':4,
+        'width':'data(_w)', 'height':'data(_w)', 'background-color':'data(_color)',
+        'border-width':2, 'border-color':'#00000055' } },
+      { selector:'edge', style:{ 'width':2, 'line-color':'#4a4660', 'target-arrow-color':'#4a4660',
+        'target-arrow-shape':'triangle', 'curve-style':'bezier', 'arrow-scale':0.8 } },
+      { selector:'edge[turn]', style:{ 'line-color':'#9c47d1', 'target-arrow-color':'#9c47d1', 'line-style':'dashed', 'width':3 } },
+      { selector:'node:selected', style:{ 'border-color':'#ffffff', 'border-width':3 } },
+    ],
+  });
+
+  function recolor(mode){
+    cy.nodes().forEach(n => { const d = n.data();
+      n.data('_color', mode==='function' ? (FUNC[d.function]||'#888') : (TIER[d.tier]||'#888'));
+      n.data('_w', 22 + Math.sqrt(d.count||1)*5);
+    });
+    cy.style().update();
+    const lg = document.getElementById('lg'); if(lg) lg.innerHTML = legendHTML(mode);
+  }
+  function setMode(mode){
+    document.getElementById('byTier').classList.toggle('active', mode==='tier');
+    document.getElementById('byFunction').classList.toggle('active', mode==='function');
+    recolor(mode);
+  }
+  document.getElementById('byTier').onclick = () => setMode('tier');
+  document.getElementById('byFunction').onclick = () => setMode('function');
+
+  panel.innerHTML = '<div class="empty">Click a node to see its details.</div><div class="legend" id="lg" style="margin-top:14px"></div>';
+  recolor('tier');
+
+  cy.on('tap','node', e => {
+    const d = e.target.data();
+    panel.innerHTML = `
+      <h2>${d.label}</h2>
+      <div class="row"><b>Date</b> · ${d.date||'—'}</div>
+      <div class="row"><b>Lineage</b> · ${TIER_NAME[d.tier]||d.tier||'—'}</div>
+      <div class="row"><b>Function</b> · ${FUNC_NAME[d.function]||d.function||'—'}</div>
+      <div class="row"><b>Items</b> · ${d.count ?? '—'}</div>
+      ${d.slug ? `<div class="row" style="margin-top:10px"><a href="index.html?grammar=${encodeURIComponent(d.slug)}" target="_blank" rel="noopener">open in library ↗</a></div>
+      <div class="row"><a href="grammars/${d.slug}/grammar.json" target="_blank" rel="noopener">raw JSON ↗</a></div>` : '<div class="row" style="margin-top:10px;color:var(--muted)">No grammar linked to this node yet.</div>'}
+      <div class="legend" id="lg" style="margin-top:16px"></div>`;
+    document.getElementById('lg').innerHTML = legendHTML(activeMode());
+  });
+
+  cy.fit(undefined, 60);
+  window.addEventListener('resize', () => cy.fit(undefined, 60));
+})();
+</script>
+
+<script src="site-footer.js"></script>
+<site-footer base=""></site-footer>
+</body>
+</html>

@@ -1,0 +1,76 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   {{CHANNEL_NAME}} — ONE shared design-token theme.  DEFINE COLOURS HERE ONLY.
+   Every page and viewer links this file; none should redeclare these tokens
+   locally. Light-only: backgrounds are always light, text always dark enough to
+   read on them. Token NAMES are unified — several legacy aliases resolve to the
+   same value below (kept because copy-pasted markup from sibling channel repos
+   uses either name; harmless to keep both). Change a colour once here and it
+   propagates everywhere.
+   Fonts are injected by site-header.js; the families are tokenised here too.
+
+   TEMPLATE NOTE: the values below (a warm-paper background + a restrained gold
+   accent) are recursive-tarot's palette, copied as a *working default* so the
+   site isn't colourless out of the box. Pick your own accent for
+   {{CHANNEL_NAME}} — change --gold (and --accent, its alias) to one hex value
+   and the whole site re-themes. Everything else (surfaces, ink, hairlines) is
+   accent-agnostic and can stay as-is.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root{
+  /* —— surfaces (always light) —— */
+  --bg:#f4f1ea;            /* page background (warm paper) */
+  --surface:#ffffff;       /* cards / panels */
+  --panel:#ffffff;         /* legacy alias of --surface */
+  --panel2:#faf8f3;        /* slightly recessed panel */
+  --card:#ffffff;
+  --paper:#faf8f3;
+  --chip:#faf3e6;          /* soft accent chip fill */
+  --thumb-bg:#faf8f3;      /* neutral mat behind contained card art (never crop) */
+  --stage:#faf8f3;         /* video/sequence stage — light (never dark) */
+  --felt:#eef0f7;          /* game-table-style surface — light (never dark) */
+
+  /* —— ink (always dark enough for the light surfaces above) —— */
+  --ink:#221f1a;           /* primary text */
+  --ink-soft:#4a4439;      /* secondary text */
+  --ink-strong:#221f1a;    /* legacy alias — NEVER white */
+  --mut:#6b6457;           /* muted */
+  --muted:#6b6457;         /* legacy alias of --mut */
+  --faint:#8a8273;         /* faintest readable */
+  --fg:#221f1a;            /* legacy alias */
+  --text:#221f1a;          /* legacy alias */
+
+  /* —— hairlines —— */
+  --line:#d8d2c6;
+  --line-soft:#cfc8ba;
+  --chipline:#cfc8ba;
+
+  /* —— the one UI accent — CHANGE THIS for {{CHANNEL_NAME}} (accent only, never a fill) —— */
+  --gold:#9a7322;
+  --accent:#9a7322;        /* legacy alias of --gold */
+  --accent2:#9a7322;
+
+  /* —— shadows —— */
+  --shadow-card:0 14px 30px -20px rgba(60,45,20,.55);
+  --shadow-lift:0 26px 46px -22px rgba(60,45,20,.6);
+
+  /* —— type families (webfont injected by site-header.js) —— */
+  --serif-display:"Fraunces",Georgia,"Times New Roman",serif;
+  --serif-body:"Fraunces",Georgia,serif;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+/* recursive.eco redirects render in the platform purple, site-wide (wayfinding to the parent) */
+a[href^="https://recursive.eco"],a[href^="http://recursive.eco"],a[href^="https://flow.recursive.eco"],a[href^="https://kids.recursive.eco"]{color:#9333ea}
+
+/* recursive.eco redirect BUTTONS render purple too (wayfinding) — !important beats local button CSS */
+a.solid[href*="//recursive.eco"],a.solid[href*="//flow.recursive.eco"],a.btn.primary[href*="//recursive.eco"],a.btn.primary[href*="//flow.recursive.eco"]{background:#9333ea!important;border-color:#9333ea!important;color:#fff!important}
+a.solid[href*="//recursive.eco"]:hover,a.solid[href*="//flow.recursive.eco"]:hover{background:#7c2fd0!important}
+a.line[href*="//recursive.eco"],a.line[href*="//flow.recursive.eco"]{color:#9333ea!important;border-color:#c9a8f0!important}
+a.line[href*="//recursive.eco"]:hover,a.line[href*="//flow.recursive.eco"]:hover{border-color:#9333ea!important;color:#9333ea!important}
+
+/* Canonical recursive.eco action chip — platform purple, carries its own action icon
+   (pencil = Edit, play = Play). ONE affordance across every viewer. */
+.eco-chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12.5px;font-weight:600;
+  text-decoration:none;color:#9333ea;padding:6px 12px;border-radius:8px;border:1px solid #c9a8f0;background:#fff;
+  transition:border-color .15s,background .15s}
+.eco-chip:hover{border-color:#9333ea;background:#faf5ff}
+.eco-chip svg{width:15px;height:15px;flex-shrink:0}

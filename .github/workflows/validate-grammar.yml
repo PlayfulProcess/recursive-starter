@@ -1,0 +1,23 @@
+# Grammar validation gate — runs check.py (zero dependencies) on every push/PR
+# that touches a grammar. Pattern mirrored from recursive-tarot's
+# validate-grammar.yml, simplified to this starter's dependency-free check.py
+# instead of a Node validator script.
+name: validate-grammar
+
+on:
+  push:
+    paths:
+      - 'grammars/**'
+      - 'check.py'
+  pull_request:
+    paths:
+      - 'grammars/**'
+      - 'check.py'
+
+jobs:
+  validate-grammar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate every grammar
+        run: python3 check.py

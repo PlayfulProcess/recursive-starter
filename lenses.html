@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lenses — one item, every grammar — {{CHANNEL_NAME}}</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  /* Layout only — every colour comes from theme.css (the one source). Do not add colour tokens here. */
+  html,body{margin:0;background:var(--bg);color:var(--ink);color-scheme:light;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 18px 80px}
+  header.hero{padding:14px 0 8px}
+  .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+  h1{font-family:"Fraunces",Georgia,serif;font-size:28px;margin:6px 0 8px;color:var(--ink)}
+  .lede{color:var(--muted);font-size:15px;max-width:72ch}
+
+  .picker{margin-top:22px}
+  .keyrow{display:flex;flex-wrap:wrap;gap:8px}
+  .keybtn{font:inherit;font-size:13px;padding:7px 13px;border-radius:9px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);cursor:pointer;transition:border-color .15s,background .15s}
+  .keybtn:hover{border-color:var(--accent)}
+  .keybtn.active{background:var(--chip,#faf3e6);border-color:var(--accent);color:var(--ink)}
+
+  .results{margin-top:28px}
+  .results h2{font-family:"Fraunces",Georgia,serif;font-size:21px;margin:0 0 4px}
+  .results .rsub{font-size:13px;color:var(--muted);margin:0 0 16px}
+  .lensgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .lenscard{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;min-height:120px}
+  .lenscard .trad{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
+  .lenscard b{display:block;font-family:"Fraunces",Georgia,serif;font-size:16px;margin:0 0 8px}
+  .lenscard .sec{margin-top:9px}
+  .lenscard .sec h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 3px}
+  .lenscard .sec p{margin:0;font-size:13.5px;color:var(--ink)}
+  .lenscard .empty{font-size:13px;color:var(--muted);font-style:italic}
+
+  .note{margin-top:34px;padding:16px 18px;border:1px dashed var(--line);border-radius:12px;
+    background:var(--chip,#f7f3ea);font-size:13.5px;color:var(--muted)}
+  .note b{color:var(--ink)}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<script src="site-header.js?v=1"></script>
+<site-header active="lenses"></site-header>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">{{CHANNEL_NAME}} · lenses</div>
+    <h1>One item, every grammar</h1>
+    <p class="lede">Pick a name and read how every grammar in this repo that has an item by that
+      name treats it, side by side. Where a grammar has no matching item, the gap is shown
+      honestly, not papered over. Back to <a href="index.html">the library</a>.</p>
+  </header>
+
+  <div class="picker">
+    <div class="keyrow" id="keyrow" aria-live="polite"></div>
+  </div>
+
+  <section class="results">
+    <h2 id="results-h">Loading…</h2>
+    <p class="rsub" id="results-sub"></p>
+    <div class="lensgrid" id="lensgrid" aria-live="polite"></div>
+  </section>
+
+  <p class="note" id="fallback" hidden></p>
+
+  <div class="note">
+    <b>How this works.</b> This page fetches <code>ids.json</code> to find every grammar in this
+    repo, fetches each grammar's JSON, and indexes every item by its (lowercased) <code>name</code>.
+    Pick a name that appears in more than one grammar to compare them. No backend, no build step —
+    add a grammar to <code>grammars/</code> and list it in <code>ids.json</code>, and it shows up
+    here automatically. See <a href="index.html">the library</a> for every grammar in this repo.
+  </div>
+</div>
+
+<script src="site-footer.js?v=1"></script>
+<site-footer></site-footer>
+
+<script>
+const $ = s => document.querySelector(s);
+
+async function loadIds(){
+  try {
+    const r = await fetch('ids.json', { cache: 'no-cache' });
+    if (!r.ok) return {};
+    return (await r.json()).ids || {};
+  } catch (e) { return {}; }
+}
+async function loadGrammar(slug){
+  try {
+    const r = await fetch(`grammars/${slug}/grammar.json`, { cache: 'no-cache' });
+    if (!r.ok) throw new Error(String(r.status));
+    return await r.json();
+  } catch (e) { return null; }
+}
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function mdLite(s){
+  return escHtml(s).replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/`(.+?)`/g,'<code>$1</code>');
+}
+
+(async function(){
+  const slugs = Object.keys(await loadIds());
+  const grammars = []; // { slug, name, items }
+  for (const slug of slugs) {
+    const g = await loadGrammar(slug);
+    if (g) grammars.push({ slug, name: g.name || slug, items: g.items || [] });
+  }
+  if (!grammars.length) {
+    $('#fallback').hidden = false;
+    $('#fallback').innerHTML = '<b>No grammars found.</b> Add at least one grammar under '
+      + '<code>grammars/</code> and list its slug in <code>ids.json</code>.';
+    $('#results-h').textContent = '';
+    return;
+  }
+
+  // Index every item by lowercased name -> [{ slug, gname, item }]
+  const byName = {};
+  grammars.forEach(g => g.items.forEach(it => {
+    if (!it.name || it.composite_of) return; // skip composite/grouping items — leaves only
+    const key = it.name.trim().toLowerCase();
+    (byName[key] ||= []).push({ slug: g.slug, gname: g.name, item: it });
+  }));
+
+  // Only names shared by 2+ grammars make an interesting lens — but if this
+  // is a fresh template with one grammar, show every name so there's still
+  // something to click.
+  const shared = Object.entries(byName).filter(([, v]) => v.length > 1);
+  const names = (shared.length ? shared : Object.entries(byName))
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+
+  const keyrow = $('#keyrow');
+  keyrow.innerHTML = names.map(([key], i) =>
+    `<button class="keybtn${i===0?' active':''}" data-key="${escHtml(key)}">${escHtml(names.find(n=>n[0]===key)[1][0].item.name)}</button>`
+  ).join('');
+
+  function renderLens(key){
+    keyrow.querySelectorAll('.keybtn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+    const matches = byName[key] || [];
+    $('#results-h').textContent = matches[0] ? matches[0].item.name : key;
+    $('#results-sub').textContent = `${matches.length} grammar${matches.length===1?'':'s'} have an item by this name.`;
+    $('#lensgrid').innerHTML = matches.map(({ gname, item }) => {
+      const secs = Object.entries(item.sections || {}).slice(0, 2)
+        .map(([label, text]) => `<div class="sec"><h4>${escHtml(label)}</h4><p>${mdLite(String(text).slice(0,220))}${String(text).length>220?'…':''}</p></div>`)
+        .join('') || '<div class="empty">No sections on this item.</div>';
+      return `<div class="lenscard"><div class="trad">${escHtml(gname)}</div><b>${escHtml(item.name)}</b>${secs}</div>`;
+    }).join('');
+  }
+
+  keyrow.addEventListener('click', e => {
+    const btn = e.target.closest('.keybtn');
+    if (btn) renderLens(btn.dataset.key);
+  });
+
+  if (names.length) renderLens(names[0][0]);
+  else {
+    $('#results-h').textContent = 'No shared items yet';
+    $('#results-sub').textContent = 'Add a second grammar with an item sharing a name with an existing one to see a lens.';
+  }
+})();
+</script>
+</body>
+</html>

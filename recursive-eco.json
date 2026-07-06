@@ -1,0 +1,26 @@
+{
+  "_note": "Channel manifest for recursive.eco. Makes this repo self-describing: recursive.eco imports it as a channel by reading this file from raw.githubusercontent.com/{{GITHUB_OWNER}}/{{GITHUB_REPO}}/<default_branch>/recursive-eco.json. Declares the channel identity (rendered as a channel-document, document_data.is_channel=true), where its grammars live (grammars/<slug>/grammar.json), and the slug->UUID map (ids.json). Mirrors recursive-tarot/recursive-eco.json and recursive-astrology/recursive-eco.json — this file is the pattern, templatized. See recursive-eco/docs/DESIGN-import-channel-from-github.md.",
+  "schema_version": 1,
+  "channel": {
+    "slug": "{{CHANNEL_SLUG}}",
+    "name": "{{CHANNEL_NAME}}",
+    "type": "repo",
+    "icon": "🔮",
+    "gradient": "from-amber-50 to-indigo-100 dark:from-amber-950 dark:to-indigo-900",
+    "description": "{{CHANNEL_DESCRIPTION}}",
+    "landing_url": "https://{{CHANNEL_DOMAIN}}",
+    "hero": {
+      "title": "{{CHANNEL_NAME}}",
+      "subtitle": "{{CHANNEL_DESCRIPTION}}",
+      "body_md": "REPLACE-ME: one or two paragraphs introducing the channel — what it is, what creed or stance it holds (a grammar is a mirror to think with, never a command to obey), and what makes this domain's grammars worth reading."
+    }
+  },
+  "grammars": {
+    "paths": ["grammars/*/grammar.json"],
+    "exclude": [],
+    "_exclude_note": "List any generated/meta/reference grammars here that should NOT import as channel members (e.g. an auto-built 'all-grammars' index). Empty is fine for a new channel.",
+    "id_map": "ids.json"
+  },
+  "maintainers": ["REPLACE-ME@example.com"],
+  "default_branch": "main"
+}

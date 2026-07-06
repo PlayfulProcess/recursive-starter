@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{CHANNEL_NAME}} — {{CHANNEL_DESCRIPTION}}</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+  /* Layout only — every colour comes from theme.css (the one source). Do not add colour tokens here. */
+  html,body{margin:0;background:var(--bg);color:var(--ink);color-scheme:light;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 18px 80px}
+  header.hero{padding:14px 0 8px}
+  .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+  h1{font-family:"Fraunces",Georgia,serif;font-size:30px;margin:6px 0 8px;color:var(--ink)}
+  .lede{color:var(--muted);font-size:15.5px;max-width:70ch}
+  .lede code{background:var(--chip,#f1ece1);padding:1px 5px;border-radius:5px;font-size:.9em}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:26px}
+  .card{display:block;text-align:left;background:var(--panel);border:1px solid var(--line);
+    border-radius:13px;padding:15px 16px;cursor:pointer;font:inherit;color:inherit;
+    transition:transform .15s, border-color .15s, box-shadow .15s}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+  .card .cat{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .card b{display:block;font-family:"Fraunces",Georgia,serif;font-size:17px;margin:4px 0 6px}
+  .card .snip{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .card .members{font-size:11.5px;color:var(--accent);margin-top:8px}
+  /* detail */
+  dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);
+    max-width:640px;width:calc(100% - 32px);padding:0}
+  dialog::backdrop{background:rgba(20,15,8,.42)}
+  .dhead{padding:20px 22px 4px}
+  .dbody{padding:2px 22px 22px}
+  .dhead .cat{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .dhead h2{font-family:"Fraunces",Georgia,serif;margin:6px 0 0;font-size:23px}
+  .sec{margin-top:16px}
+  .sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 4px}
+  .sec p{margin:0;font-size:15px;color:var(--ink)}
+  .close{position:sticky;top:0;float:right;margin:12px 14px 0 0;border:0;background:none;font-size:22px;
+    line-height:1;cursor:pointer;color:var(--muted)}
+  .note{margin-top:34px;padding:16px 18px;border:1px dashed var(--line);border-radius:12px;
+    background:var(--chip,#f7f3ea);font-size:13.5px;color:var(--muted)}
+  .note b{color:var(--ink)}
+  a{color:var(--accent)}
+
+  /* ── hero CTA row ── */
+  .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+  /* ── three ways in: the site's other pages, up front so they're discoverable ── */
+  .ways{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:26px 0 0}
+  .way{display:block;background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    padding:17px 18px;text-decoration:none;color:inherit;transition:transform .15s,border-color .15s,box-shadow .15s}
+  .way:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 28px rgba(0,0,0,.10)}
+  .way .wicon{color:var(--accent);margin-bottom:8px}
+  .way h3{font-family:"Fraunces",Georgia,serif;font-size:17px;margin:0 0 6px;color:var(--ink)}
+  .way p{font-size:13px;color:var(--muted);margin:0;line-height:1.5}
+
+  /* ── gallery: every grammar, browsable with working preview links ── */
+  .gallery{margin-top:44px}
+  .gallery h2{font-size:21px;margin:0 0 4px;font-family:"Fraunces",Georgia,serif;color:var(--ink)}
+  .gallery .gsub{font-size:13px;color:var(--muted);margin:0 0 16px;max-width:70ch}
+  .glib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .glib-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;
+    display:flex;flex-direction:column;gap:6px}
+  .glib-card .gcat{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .glib-card .gname{font-family:"Fraunces",Georgia,serif;font-size:16.5px;margin:0;color:var(--ink)}
+  .glib-card .gdesc{font-size:13px;color:var(--muted);margin:0;display:-webkit-box;
+    -webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .glib-card .glinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .glib-card .gplain{font-size:12px;color:var(--accent);text-decoration:none}
+  .glib-card .gplain:hover{text-decoration:underline}
+  .glib-card .gnote{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:2px}
+</style>
+</head>
+<body>
+<script src="site-header.js?v=1"></script>
+<site-header active="home"></site-header>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">{{CHANNEL_NAME}} · a library, held to the record</div>
+    <h1 id="g-name">Loading…</h1>
+    <p class="lede" id="g-desc"></p>
+  </header>
+
+  <nav class="ways" aria-label="Ways into this site">
+    <a class="way" href="lenses.html">
+      <svg class="wicon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+      </svg>
+      <h3>Lenses</h3>
+      <p>Pick one thing and read how several grammars treat it, side by side.</p>
+    </a>
+    <a class="way" href="genealogy.html">
+      <svg class="wicon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="5" r="2.5" /><path d="M12 7.5V11M12 11l-6 4M12 11l6 4" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="18" r="2.5" />
+      </svg>
+      <h3>Genealogy</h3>
+      <p>How this domain's grammars relate to one another over time — a map, not a database.</p>
+    </a>
+    <a class="way" href="pages/course.html">
+      <svg class="wicon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 0-2 2z" /><path d="M5 4v16" />
+      </svg>
+      <h3>Course</h3>
+      <p>A guided read-through — chapters that introduce the grammars and how to use them.</p>
+    </a>
+    <a class="way" href="#all-grammars">
+      <svg class="wicon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="4" width="7" height="7" rx="1.2" /><rect x="13" y="4" width="7" height="7" rx="1.2" />
+        <rect x="4" y="13" width="7" height="7" rx="1.2" /><rect x="13" y="13" width="7" height="7" rx="1.2" />
+      </svg>
+      <h3>All Grammars</h3>
+      <p>Every grammar in this repo, browsable below — with links to Cards, Study, and Tree.</p>
+    </a>
+  </nav>
+
+  <main id="grid" class="grid" aria-live="polite"></main>
+
+  <p class="note" id="fallback" hidden></p>
+
+  <div class="note">
+    <b>This whole page is one small HTML file reading one JSON grammar.</b> No backend, no build step.
+    The data is the point: <code>grammars/&lt;slug&gt;/grammar.json</code> is the library. See
+    <a href="https://github.com/{{GITHUB_OWNER}}/{{GITHUB_REPO}}#readme">the README</a> for the first hour,
+    <a href="CLAUDE.md">CLAUDE.md</a> if you're filling this template in with an AI assistant, and
+    <a href="https://tarot.recursive.eco">The Recursive Tarot</a> for this template's parent — same creed,
+    different domain.
+  </div>
+
+  <section class="gallery" id="all-grammars" aria-labelledby="all-grammars-h">
+    <h2 id="all-grammars-h">Browse every grammar</h2>
+    <p class="gsub">Every grammar in this repo, with working preview links — Cards, Study, and Tree all open on
+      <a href="https://recursive.eco">recursive.eco</a>, Open in app opens the live oracle on
+      <a href="https://flow.recursive.eco">flow.recursive.eco</a>, and Raw JSON is the file itself, right here.</p>
+
+    <div class="glib-grid" id="glib-main" aria-live="polite">
+      <p class="gsub">Loading grammars…</p>
+    </div>
+  </section>
+</div>
+
+<script src="site-footer.js?v=1"></script>
+<site-footer></site-footer>
+
+<dialog id="detail">
+  <button class="close" aria-label="Close" onclick="detail.close()">×</button>
+  <div class="dhead"><div class="cat" id="d-cat"></div><h2 id="d-name"></h2></div>
+  <div class="dbody" id="d-sections"></div>
+</dialog>
+
+<script>
+const slug = (new URLSearchParams(location.search).get('grammar') || 'example-grammar')
+  .replace(/[^a-z0-9-]/g, '');
+const GRAMMAR_URL = `grammars/${slug}/grammar.json`;
+const $ = s => document.querySelector(s);
+let ITEMS = [];
+
+function firstProse(sections){
+  const v = Object.values(sections || {})[0] || '';
+  return v.replace(/[*`_#>]/g,'');
+}
+function render(g){
+  $('#g-name').textContent = g.name;
+  $('#g-desc').textContent = g.description || '';
+  document.title = g.name + ' — {{CHANNEL_NAME}}';
+  ITEMS = g.items || [];
+  const grid = $('#grid');
+  grid.innerHTML = '';
+  ITEMS.forEach((it, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'card';
+    const members = it.composite_of
+      ? `<div class="members">▹ groups ${it.composite_of.length} item${it.composite_of.length>1?'s':''}</div>` : '';
+    btn.innerHTML = `<span class="cat">${it.category || 'item'}</span>`
+      + `<b>${it.name}</b>`
+      + `<span class="snip">${firstProse(it.sections)}</span>${members}`;
+    btn.onclick = () => open(i);
+    grid.appendChild(btn);
+  });
+}
+function mdLite(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>');
+}
+function open(i){
+  const it = ITEMS[i];
+  $('#d-cat').textContent = it.category || '';
+  $('#d-name').textContent = it.name;
+  const body = $('#d-sections');
+  body.innerHTML = '';
+  Object.entries(it.sections || {}).forEach(([label, text]) => {
+    const div = document.createElement('div');
+    div.className = 'sec';
+    div.innerHTML = `<h3>${label}</h3><p>${mdLite(text)}</p>`;
+    body.appendChild(div);
+  });
+  $('#detail').showModal();
+}
+
+fetch(GRAMMAR_URL)
+  .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(render)
+  .catch(err => {
+    const fb = $('#fallback');
+    fb.hidden = false;
+    fb.innerHTML = '<b>Could not load the grammar.</b> Browsers block <code>file://</code> fetches, '
+      + 'so open this over a tiny local server instead: run <code>python3 -m http.server 8000</code> '
+      + 'in this folder, then visit <code>http://localhost:8000/</code>. (On GitHub Pages it just works.)';
+    $('#g-name').textContent = '{{CHANNEL_NAME}}';
+  });
+</script>
+
+<script>
+// ── "Browse every grammar" gallery — client-side only, no build step. ──
+// Fully data-driven: the slug LIST itself comes from ids.json's `ids` object
+// (its keys ARE every grammar this channel has), so adding a new grammar means
+// adding one entry to ids.json — no code change here. Each card then fetches
+// that grammar's own JSON for name/description/item count and renders working
+// preview links. A slug with no UUID yet just gets the Raw JSON link + a
+// "not yet published" note.
+(function(){
+  function escHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function chip(href, label){
+    return `<a class="eco-chip" href="${href}" target="_blank" rel="noopener">${escHtml(label)}</a>`;
+  }
+  function plainLink(href, label){
+    return `<a class="gplain" href="${href}" target="_blank" rel="noopener">${escHtml(label)}</a>`;
+  }
+
+  function renderCard(slug, g, uuid){
+    const rawHref = `grammars/${slug}/grammar.json`;
+    if (!g) {
+      return `<div class="glib-card" data-slug="${escHtml(slug)}">
+        <div class="gcat">grammar</div>
+        <b class="gname">${escHtml(slug)}</b>
+        <p class="gdesc">Could not load this grammar's JSON.</p>
+        <div class="glinks">${plainLink(rawHref, 'Raw JSON')}</div>
+      </div>`;
+    }
+    const name = escHtml(g.name || slug);
+    const fullDesc = g.description || '';
+    const desc = escHtml(fullDesc.slice(0, 160)) + (fullDesc.length > 160 ? '…' : '');
+    const count = Array.isArray(g.items) ? g.items.length : 0;
+    let links;
+    let note = '';
+    if (uuid && !/^\{\{/.test(uuid)) {
+      links = [
+        chip(`https://recursive.eco/pages/grammar-viewer.html?type={{CHANNEL_SLUG}}&id=${uuid}`, 'Cards'),
+        chip(`https://recursive.eco/pages/study-viewer.html?type={{CHANNEL_SLUG}}&id=${uuid}`, 'Study'),
+        chip(`https://recursive.eco/pages/tree-viewer.html?type={{CHANNEL_SLUG}}&id=${uuid}`, 'Tree'),
+        chip(`https://flow.recursive.eco/play?id=${uuid}`, 'Open in app'),
+        plainLink(rawHref, 'Raw JSON'),
+        plainLink(`index.html?grammar=${slug}`, 'Read here'),
+      ].join('');
+    } else {
+      links = [plainLink(rawHref, 'Raw JSON'), plainLink(`index.html?grammar=${slug}`, 'Read here')].join('');
+      note = '<div class="gnote">Not yet published to recursive.eco</div>';
+    }
+    return `<div class="glib-card" data-slug="${escHtml(slug)}">
+      <div class="gcat">${count} item${count === 1 ? '' : 's'}</div>
+      <b class="gname">${name}</b>
+      <p class="gdesc">${desc}</p>
+      <div class="glinks">${links}</div>
+      ${note}
+    </div>`;
+  }
+
+  async function loadIds(){
+    try {
+      const r = await fetch('ids.json', { cache: 'no-cache' });
+      if (!r.ok) return {};
+      const j = await r.json();
+      return j.ids || {};
+    } catch (e) { return {}; }
+  }
+
+  async function loadGrammar(slug){
+    try {
+      const r = await fetch(`grammars/${slug}/grammar.json`, { cache: 'no-cache' });
+      if (!r.ok) throw new Error(String(r.status));
+      return await r.json();
+    } catch (e) { return null; }
+  }
+
+  async function renderGrid(elId, slugs, ids){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!slugs.length) { el.innerHTML = '<p class="gsub">No grammars in ids.json yet.</p>'; return; }
+    const cards = await Promise.all(slugs.map(async slug => {
+      const g = await loadGrammar(slug);
+      return renderCard(slug, g, ids[slug]);
+    }));
+    el.innerHTML = cards.join('');
+  }
+
+  (async () => {
+    const ids = await loadIds();
+    await renderGrid('glib-main', Object.keys(ids), ids);
+  })();
+})();
+</script>
+</body>
+</html>

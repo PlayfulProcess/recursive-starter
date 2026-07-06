@@ -1,0 +1,18 @@
+{
+  "_note": "Slug -> recursive.eco grammar UUID (the deckId) for the {{CHANNEL_SLUG}} channel. Used by recursive.eco to bind repo grammars to their live rows and to build per-grammar links. _public_now lists the slugs that are is_public=true on recursive.eco (only public grammars import as channel members). Keep this updated when new grammars are created. Mirrors recursive-tarot/tarot/_eco_ids.json and recursive-astrology/ids.json.",
+  "_preview_links": "Every grammar renders with no extra hosting: swap <id> for the UUID from `ids`. Play = https://flow.recursive.eco/play?id=<id> | Edit = https://flow.recursive.eco/create/dashboard/unified/new?id=<id> | Cards = https://recursive.eco/pages/grammar-viewer.html?type={{CHANNEL_SLUG}}&id=<id> | Study = https://recursive.eco/pages/study-viewer.html?type={{CHANNEL_SLUG}}&id=<id> | Tree = https://recursive.eco/pages/tree-viewer.html?type={{CHANNEL_SLUG}}&id=<id> | Thumbnails = Cards + &layout=thumbnails",
+  "_public_now": [],
+  "ids": {
+    "example-grammar": "{{UUID_FROM_RECURSIVE_ECO}}"
+  },
+  "preview_links": {
+    "_note": "Additive, per-slug mirror of the `_preview_links` template above — one entry per grammar in grammars/*/grammar.json, kept in sync with index.html's 'Browse every grammar' gallery. `raw` always resolves (no UUID needed); `cards`/`study`/`tree`/`play` are null until the slug gets a real UUID in `ids` above.",
+    "example-grammar": {
+      "raw": "grammars/example-grammar/grammar.json",
+      "cards": null,
+      "study": null,
+      "tree": null,
+      "play": null
+    }
+  }
+}

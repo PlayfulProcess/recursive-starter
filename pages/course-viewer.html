@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="../theme.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course — {{CHANNEL_NAME}}</title>
+<!--
+  TEMPLATE NOTE: recursive-tarot's course-viewer.html is ~100KB of tarot-specific
+  embed logic (data-embed="decks"/"people"/"suits"/… blocks that pull deck/people
+  grammar data into the prose). That's real feature depth but entirely
+  tarot-shaped — not a good starter default. This version is deliberately
+  data-driven and generic instead: it reads course/manifest.json for the chapter
+  list + reads each chapter's plain-markdown .mdx file, and renders a simple
+  TOC sidebar + article. Add a chapter by adding one manifest entry + one .mdx
+  file (see course/manifest.json's _note). If you later want rich embeds like
+  tarot's (a card gallery inline in the prose, say), that's a genuine feature
+  addition — build it data-driven (read the grammar via fetch, same pattern as
+  index.html), not copy tarot's hardwired version.
+-->
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,sans-serif;line-height:1.65}
+  .layout{display:flex;max-width:1080px;margin:0 auto;min-height:calc(100vh - 60px)}
+  nav.toc{width:230px;flex-shrink:0;padding:28px 16px;border-right:1px solid var(--line)}
+  nav.toc h2{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 10px}
+  nav.toc a{display:block;padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--ink-soft);
+    text-decoration:none;margin-bottom:2px}
+  nav.toc a:hover{background:var(--chip,#f4f1ea);color:var(--ink)}
+  nav.toc a.active{background:var(--chip,#faf3e6);color:var(--ink);font-weight:600}
+  .article{flex:1;min-width:0;max-width:720px;margin:0 auto;padding:32px 24px 80px}
+  .article h1{font-size:28px;color:var(--accent);line-height:1.2;margin:.3em 0}
+  .article h2{font-size:21px;margin:1.5em 0 .4em;border-bottom:1px solid var(--line);padding-bottom:.2em}
+  .article h3{font-size:16px;margin:1.2em 0 .3em;color:var(--ink-soft)}
+  .article p,.article li{font-size:15.5px;color:var(--ink-soft)}
+  .article a{color:var(--gold)}
+  .article code{background:var(--chip,#f4f1ea);padding:.12em .4em;border-radius:5px;font-size:.9em}
+  .article pre{background:var(--panel2,#f4f1ea);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto}
+  .article pre code{background:none;padding:0}
+  .article blockquote{border-left:3px solid var(--accent);margin:1em 0;padding:.2em 0 .2em 1em;color:var(--ink-soft);opacity:.92}
+  .article img{max-width:100%;border-radius:8px}
+  .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .navbtns{display:flex;justify-content:space-between;margin-top:40px;padding-top:16px;border-top:1px solid var(--line);font-size:13.5px}
+  #err{padding:40px;text-align:center;color:#e07a5f}
+  @media (max-width:760px){ .layout{flex-direction:column} nav.toc{width:auto;border-right:0;border-bottom:1px solid var(--line)} }
+</style>
+</head>
+<body>
+<script src="../site-header.js?v=1"></script>
+<site-header active="course"></site-header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="Chapters"><h2>Chapters</h2><div id="toc-list">Loading…</div></nav>
+  <article class="article" id="article"><div id="err" style="display:none"></div></article>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+
+function mdMeta(text){
+  let meta = {};
+  const fm = text.match(/^---\n([\s\S]*?)\n---\n/);
+  if (fm) {
+    fm[1].split('\n').forEach(l => { const m = l.match(/^(\w+):\s*"?(.*?)"?$/); if (m) meta[m[1]] = m[2]; });
+    text = text.slice(fm[0].length);
+  }
+  text = text.replace(/^\s*(import|export)\s.*$/gm, ''); // strip stray MDX syntax defensively
+  return { meta, text };
+}
+
+(async function () {
+  let manifest;
+  try {
+    manifest = await (await fetch('../course/manifest.json', { cache: 'no-cache' })).json();
+  } catch (e) {
+    $('#err').style.display = 'block';
+    $('#err').textContent = 'Could not load course/manifest.json — ' + e.message;
+    $('#toc-list').textContent = '';
+    return;
+  }
+  const chapters = manifest.chapters || [];
+  document.title = (manifest.title || 'Course') + ' — {{CHANNEL_NAME}}';
+
+  const wantSlug = params.get('chapter') || (chapters[0] && chapters[0].slug);
+
+  $('#toc-list').innerHTML = chapters.map(c =>
+    `<a href="?chapter=${encodeURIComponent(c.slug)}" data-slug="${c.slug}"${c.slug===wantSlug?' class="active"':''}>${c.title}</a>`
+  ).join('') || '<p style="color:var(--muted);font-size:13px">No chapters in the manifest yet.</p>';
+
+  async function loadChapter(slug) {
+    const chap = chapters.find(c => c.slug === slug) || chapters[0];
+    if (!chap) { $('#article').innerHTML = '<p>No chapters yet — add one to course/manifest.json.</p>'; return; }
+    document.querySelectorAll('#toc-list a').forEach(a => a.classList.toggle('active', a.dataset.slug === chap.slug));
+    try {
+      const raw = await (await fetch('../course/' + chap.file, { cache: 'no-cache' })).text();
+      const { meta, text } = mdMeta(raw);
+      marked.setOptions({ gfm: true, breaks: false });
+      let html = '';
+      if (meta.author || meta.duration) html += `<div class="meta">${[meta.author, meta.duration ? meta.duration + ' min' : null].filter(Boolean).join(' · ')}</div>`;
+      html += marked.parse(text);
+      const idx = chapters.findIndex(c => c.slug === chap.slug);
+      const prev = chapters[idx - 1], next = chapters[idx + 1];
+      html += `<div class="navbtns">
+        <span>${prev ? `<a href="?chapter=${encodeURIComponent(prev.slug)}">&larr; ${prev.title}</a>` : ''}</span>
+        <span>${next ? `<a href="?chapter=${encodeURIComponent(next.slug)}">${next.title} &rarr;</a>` : ''}</span>
+      </div>`;
+      $('#article').innerHTML = html;
+    } catch (e) {
+      $('#err').style.display = 'block';
+      $('#err').textContent = 'Could not load course/' + chap.file + ' — ' + e.message;
+    }
+  }
+
+  $('#toc-list').addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return;
+    e.preventDefault();
+    const slug = a.dataset.slug;
+    history.pushState({}, '', '?chapter=' + encodeURIComponent(slug));
+    loadChapter(slug);
+  });
+  window.addEventListener('popstate', () => loadChapter(params.get('chapter') || chapters[0]?.slug));
+
+  loadChapter(wantSlug);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "_note": "The course's table of contents. pages/course-viewer.html reads this file to build its sidebar and to know which .mdx file to render for each chapter. Add a chapter by (1) writing course/<slug>.mdx and (2) adding one entry here — no code change needed. Order in this array is the reading order.",
+  "title": "{{CHANNEL_NAME}} — Course",
+  "description": "REPLACE-ME: one sentence describing what this course teaches (how to read the grammars in this repo, the history behind them, how to contribute your own).",
+  "chapters": [
+    {
+      "slug": "welcome",
+      "title": "REPLACE-ME: Welcome",
+      "summary": "REPLACE-ME: one sentence describing this chapter.",
+      "file": "welcome.mdx"
+    }
+  ]
+}

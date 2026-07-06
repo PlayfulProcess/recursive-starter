@@ -1,0 +1,58 @@
+{
+  "name": "REPLACE-ME: Example Grammar",
+  "description": "REPLACE-ME: one or two sentences describing what this grammar is (a deck, a book, a sequence, an interpretation set) and where its content comes from. This file is the worked example the recursive-starter template ships with — copy this folder's SHAPE for every real grammar you author, then delete this one (or leave it as a live reference of the schema).",
+  "grammar_type": "custom",
+  "cover_image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/REPLACE-ME-cover-image.jpg",
+  "tags": ["REPLACE-ME", "example", "template"],
+  "creator_name": "REPLACE-ME: your name or handle",
+  "creator_link": "REPLACE-ME: your website or profile URL",
+  "is_published": false,
+  "_grammar_commons": {
+    "schema_version": "1.0",
+    "license": "CC-BY-SA-4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": [
+      {
+        "name": "REPLACE-ME: source name (a book, a public-domain text, an original composition)",
+        "role": "source material"
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "example-first-item",
+      "name": "REPLACE-ME: First Item's Name",
+      "category": "example",
+      "sort_order": 0,
+      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/REPLACE-ME-first-item.jpg",
+      "sections": {
+        "Description": "REPLACE-ME: the main prose for this item — what it is, what it means, what it evokes. This is the section every viewer renders first.",
+        "Notes": "REPLACE-ME: a second section — e.g. historical context, a citation, a usage note. Add as many named sections as your grammar needs; section NAMES are yours to choose (Description/Notes here are just an example pairing)."
+      },
+      "metadata": {
+        "REPLACE-ME-field": "Use metadata for small structured facts a viewer might filter or badge on (a date, an element, a numeric rank) — see GRAMMAR_FORMAT.md for reserved keys like source_deck/source_item_id (cross-grammar link pills) and youtube_video_id (performance embeds)."
+      }
+    },
+    {
+      "id": "example-second-item",
+      "name": "REPLACE-ME: Second Item's Name",
+      "category": "example",
+      "sort_order": 1,
+      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/REPLACE-ME-second-item.jpg",
+      "sections": {
+        "Description": "REPLACE-ME: every item in items[] follows the same shape — id, name, category, sections. Nothing else is required.",
+        "Notes": "REPLACE-ME: this second item shares the same section names as the first (Description/Notes) — that's a convention, not a requirement, but viewers read more cleanly when sibling items share section names."
+      }
+    },
+    {
+      "id": "example-composite-item",
+      "name": "REPLACE-ME: A Composite (Grouping) Item",
+      "category": "example-group",
+      "sort_order": 2,
+      "composite_of": ["example-first-item", "example-second-item"],
+      "sections": {
+        "What this groups": "REPLACE-ME: a composite item has NO image of its own — it groups other items via composite_of (an array of their ids). This is how a second-level structure (a suit, a chapter, a family of hexagrams, a historiographical pattern) emerges without a database. See GRAMMAR_FORMAT.md 'Composite items' for the full contract — there is no separate top-level 'emergences' array; composites live in items[] just like leaves."
+      }
+    }
+  ]
+}

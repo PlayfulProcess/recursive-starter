@@ -1,0 +1,36 @@
+---
+title: "REPLACE-ME: Welcome"
+author: "{{CHANNEL_NAME}}"
+duration: "5"
+---
+
+# REPLACE-ME: Welcome to {{CHANNEL_NAME}}
+
+This is a placeholder chapter shipped with the recursive-starter template. Replace this
+file's content (keep the frontmatter shape — `title` / `author` / `duration` in minutes)
+and add real chapters alongside it under `course/`.
+
+## What this course is for
+
+REPLACE-ME: explain what a newcomer should get from working through this course — how to
+read the grammars in this repo, the history or stance behind them, and (if relevant) how to
+contribute their own.
+
+## How to add a chapter
+
+1. Write a new `course/<slug>.mdx` file with the same frontmatter shape as this one.
+2. Add one entry to `course/manifest.json`'s `chapters` array — `slug`, `title`, `summary`,
+   `file`.
+3. That's it — `pages/course-viewer.html` reads the manifest and renders the sidebar +
+   the chapter content client-side. No build step.
+
+## Markdown works as expected
+
+Plain markdown — headings, **bold**, *italic*, `code`, lists, [links](https://recursive.eco),
+and images — is rendered with [marked](https://marked.js.org/) client-side. Keep MDX-specific
+syntax (JSX imports/exports) out of these files; this viewer renders plain markdown only, on
+purpose, so there's no build step.
+
+> A blockquote, for a pull-quote or a citation.
+
+Back to [the library](../index.html).
