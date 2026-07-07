@@ -1,0 +1,72 @@
+name: Rebuild collection + deploy Pages
+
+# Auto-rebuilds grammars/_collection.json whenever a grammar changes, then publishes
+# the repo to GitHub Pages. So "add grammars/<slug>/grammar.json → push" makes the
+# homepage gallery, header Grammars menu, and every viewer pick it up with no manual
+# step. Ported from recursive-tarot/.github/workflows/build-meta.yml, simplified:
+# this repo has no aggregated meta-grammar to rebuild (no all-decks-many-lenses
+# equivalent yet), just the collection index.
+#
+# NOTE for whoever runs this next: the `branches` filter below is `main` — the
+# playbook's own checklist item says "point this at the branch actually being
+# pushed." This session could not run git (write-files-only constraint), so
+# confirm this matches whatever branch actually carries the content before
+# relying on it. (Enable once: Settings → Pages → Source = "GitHub Actions".)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'grammars/**'
+      - 'scripts/build_collection.py'
+      - 'index.html'
+      - 'viewers/**'
+      - 'pages/**'
+      - 'course/**'
+      - 'site-header.js'
+      - 'theme.css'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # to commit the regenerated collection
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild grammars/_collection.json
+        run: python scripts/build_collection.py
+
+      - name: Commit regenerated collection (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- grammars/_collection.json; then
+            git add grammars/_collection.json
+            git commit -m "chore: rebuild grammars/_collection.json [skip ci]"
+            git push
+          else
+            echo "collection unchanged"
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - uses: actions/deploy-pages@v4
+        id: deploy
