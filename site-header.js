@@ -51,6 +51,12 @@
     ['timeline',  'Timeline',     PFX + 'viewers/timeline.html'],
     ['all',       'All grammars', PFX + 'index.html#all-grammars'],
   ];
+  // Site-specific instrument (playbook §3: additions beside the ported set, never
+  // a replacement) — the I Ching's own casting tool, analogue of astro's chart
+  // wheel and tarot's Spread Caster. See docs/DESIGN-path-caster.md.
+  const INSTRUMENT_VIEWS = [
+    ['caster', 'Path Caster', PFX + 'viewers/caster.html'],
+  ];
   // Courses — read via pages/course-viewer.html?course=…
   const COURSES = [
     ['three-lenses', 'Three Lenses — a reading of the 64 hexagrams', PFX + 'pages/course-viewer.html?course=three-lenses'],
@@ -66,6 +72,7 @@
     if (f.startsWith('lenses')) return 'lenses';
     if (f.startsWith('tree-viewer')) return 'tree';
     if (f.startsWith('timeline')) return 'timeline';
+    if (f.startsWith('caster')) return 'caster';
     if (f.startsWith('course-viewer') || f.startsWith('course')) return 'course';
     if (f === 'index.html' || f === '') return 'home';
     return 'home';
@@ -88,7 +95,7 @@
         `<a class="tab ${cls || ''}${key === active ? ' active' : ''}" href="${href}"${ext ? ' target="_blank" rel="noopener"' : ''}>${label}</a>`;
       const viewItem = ([key, label, href]) =>
         `<a class="${key === active ? 'on' : ''}" href="${href}">${label}</a>`;
-      const VIEW_KEYS = [...CARD_VIEWS, ...COLLECTION_VIEWS].map(v => v[0]);
+      const VIEW_KEYS = [...CARD_VIEWS, ...COLLECTION_VIEWS, ...INSTRUMENT_VIEWS].map(v => v[0]);
       const viewActive = VIEW_KEYS.includes(active);
       root.innerHTML = `
         <style>
@@ -181,6 +188,8 @@
                 ${CARD_VIEWS.map(viewItem).join('')}
                 <span class="dd-cap">Across the collection</span>
                 ${COLLECTION_VIEWS.map(viewItem).join('')}
+                <span class="dd-cap">Instrument</span>
+                ${INSTRUMENT_VIEWS.map(viewItem).join('')}
               </span>
             </span>
             <span class="dd">

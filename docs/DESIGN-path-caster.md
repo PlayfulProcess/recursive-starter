@@ -87,3 +87,45 @@ save-reading-as-grammar philosophy, static-site style.
   note ("one transition is classical; the journey is ours").
 - Verify per playbook §6 (Playwright at 390/1280: cast, explore-flip, sequential advance,
   deterministic arrival — assert the last hexagram equals the destiny across 50 random runs).
+
+## Built (July 8, 2026)
+
+All three modes shipped at `viewers/caster.html`, plus `viewers/caster-engine.js` (the
+pure hypercube math, no DOM — shared with the Node determinism script so the hardest
+logic has exactly one implementation) and `scripts/hexagram-binary.json` (the verified
+King Wen ↔ binary lookup this page and any future feature should read from).
+
+**The binary table risk, resolved.** `grammars/i-ching-summarized/grammar.json`'s own
+`metadata.binary` field turned out to have 5 real bugs (hexagrams 15, 16, 46, 63, 64 —
+63 and 64's values were literally swapped), found by cross-checking it against that same
+file's own `metadata.trigram_above`/`trigram_below` fields using the standard
+trigram-to-3-bit mapping. Wikipedia's King Wen sequence article — this doc's suggested
+source — returned HTTP 403 to every fetch attempt from this sandbox (WebFetch was not
+broadly blocked; `github.com` and `raw.githubusercontent.com` worked, `en.wikipedia.org`
+specifically did not, on any path or mirror tried). Verification instead used: (1) the
+trigram-to-3-bit family correspondence confirmed via WebSearch against general I Ching
+reference material (Zhen/Kan/Gen = eldest/middle/youngest son, one yang line at
+bottom/middle/top; Xun/Li/Dui = eldest/middle/youngest daughter, mirrored with yin) —
+independent of any file in this repo; (2) cross-referencing hexagrams 1–15 by name and
+binary against the independent `adamblvck/iching-wilhelm-dataset` (GitHub, Wilhelm
+translation) — all 15 names matched, 13 of 15 binaries matched directly (accounting for
+a bottom-to-top vs top-to-bottom mirroring between the two sources), with the 2
+exceptions being exactly the two entries already flagged as buggy, confirming the bug
+lived in this repo's stored field, not in the reconstruction; (3) the landmark checks
+this doc itself asked for — hexagram 1 = 111111 (six yang), hexagram 2 = 000000 (six
+yin), hexagrams 11 (Peace) and 12 (Standstill) are exact bitwise complements (111000 /
+000111), matching their famous classical relationship. `scripts/hexagram-binary.json`'s
+own `_meta` block carries the full method and every source, so a future session can
+audit or extend it without redoing this work.
+
+**Determinism check result:** `node scripts/determinism-check.js` — 50/50 random
+origin/destiny/step-budget/style trials arrived at the chosen destiny with every
+intermediate step a valid single-line flip; the d=0 (origin equals destiny) edge case
+was separately verified at budgets 0/2/4/6, producing legitimate loop journeys that
+return to the start.
+
+**Left out of scope:** `zhouyi-core`/`ten-wings` voice grammars (don't exist yet, per
+the design doc); a "the grammar's own content has a stray `[cite: N]` artifact in some
+Interpretation text" hygiene issue noticed in `i-ching-summarized` while building this
+(pre-existing, unrelated to the caster, not touched — fixing grammar prose content was
+not part of this task).

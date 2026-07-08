@@ -1,5 +1,71 @@
 # Changelog — The Recursive I Ching
 
+## July 8, 2026 — The Path Caster: the site's own instrument (`viewers/caster.html`)
+
+Built per `docs/DESIGN-path-caster.md` (the builder's design) — the I Ching site's
+site-specific instrument, analogue of astro's chart wheel and tarot's Spread Caster.
+Three modes, all sharing one pure-logic engine:
+
+- **Explore** — cast or pick an origin + destiny hexagram, tap any of the 6 lines on
+  the current hexagram to flip it (any line, not just a differing one — a detour is
+  allowed, loops are legitimate per the design doc's own correction). The stack grows
+  one hexagram per tap; Undo pops it; a distance-remaining counter tracks progress;
+  reaching the destiny completes the path.
+- **Cast the Path** — one tap casts a full path at a chosen step budget. Intermediate
+  steps flip a differing line (direct style) or any line with a bias toward closing
+  (wandering style); the final step always flips whatever single line still differs,
+  guaranteeing arrival.
+- **Sequential Caster** — the same casting, revealed one step at a time (tap Next, or
+  auto-advance every 2.2s).
+
+Every hexagram in the stack renders through `grammars/i-ching-summarized/grammar.json`
+(Judgment, Image, all six line texts, symbol/pinyin/Chinese name) with
+`grammars/three-lenses-64/grammar.json` layered in as a secondary "also read as" voice
+(Human Design gate name + keywords) where its name differs from the flagship's. Each
+transition shows the changing line's text from the **origin side** of that specific
+step — what the tradition says a changing line means. "Save this path" downloads the
+journey as a sequence grammar JSON (items = the path's hexagrams in order, metadata =
+the flipped line per step) — static-site style, no backend. Honesty chrome throughout:
+a "casting, not a prediction" kicker + an explicit synthesis note that one transition
+is classical, the multi-step journey is this project's own extension.
+
+- **The load-bearing fix: the King Wen ↔ binary table.** The design doc flagged this as
+  the one risk to get right — and it was right to. `grammars/i-ching-summarized/grammar.json`'s
+  own `metadata.binary` field turned out to have **5 real bugs** (hexagrams 15, 16, 46,
+  63, 64 — the 63/64 binaries were literally swapped with each other), caught by
+  cross-checking that field against the same grammar's own `metadata.trigram_above`/
+  `trigram_below` fields using the standard trigram-to-3-bit mapping (confirmed via
+  WebSearch against general I Ching reference material: Qian/Kun/Zhen/Kan/Gen/Xun/Li/Dui
+  = 111/000/100/010/001/011/101/110, bottom-to-top). Rather than patch the buggy field,
+  **`scripts/hexagram-binary.json`** was built fresh by recomputing binary from the
+  (independently verified) trigram fields for all 64 hexagrams — verified as a full
+  bijection onto 0–63, cross-referenced by name+binary against the independent
+  `adamblvck/iching-wilhelm-dataset` (GitHub) for hexagrams 1–15 (13/15 binaries matched
+  directly, the 2 exceptions being exactly the two already-flagged-buggy entries), and
+  landmark-checked per the design doc's own request (hexagram 1 = six yang, hexagram 2 =
+  six yin, hexagrams 11/12 are exact bitwise complements). Full method and sources are
+  documented in the file's own `_meta` block. Wikipedia's King Wen sequence article was
+  unreachable (403 from this sandbox) — the verification route above was used instead.
+- **`viewers/caster-engine.js`** — the pure hypercube math (Hamming distance, line-flip,
+  path generation, coin/yarrow line-casting), shared between the browser page and
+  `scripts/determinism-check.js` (no DOM dependency, so the hardest logic isn't
+  duplicated or drifting between a browser copy and a test copy).
+- **Determinism proof** (design doc's own §Verify requirement): `scripts/determinism-check.js`
+  runs 50 random origin/destiny/step-budget/style trials and asserts the final hexagram
+  always equals the chosen destiny with every intermediate step a single-line flip —
+  passed 50/50, plus a separate explicit check of the d=0 (origin equals destiny, a pure
+  "loop" journey) edge case at budgets 0/2/4/6.
+- **Wired in beside the ported set** (never replacing it): `site-header.js`'s Views menu
+  gained an "Instrument" section (Path Caster), `index.html`'s gallery gained a card, and
+  `viewers/tree-viewer.html`'s "Get a Reading" button — hidden since the initial port
+  because no local casting instrument existed yet (`docs/PLAYBOOK-FIELD-REPORT.md` §7) —
+  now points at `caster.html` instead of staying hidden.
+- **Verified with Playwright** at 390×844 and 1280×900 against a local static server:
+  cast completes and lands on the chosen destiny in all three modes, Explore's flip/undo
+  cycle, Sequential's step-by-step advance, the header/index/tree-viewer wiring, the
+  "Save this path" download, and zero page errors throughout (the external assistant
+  widget's script load fails in this offline sandbox, as expected — not a page error).
+
 ## July 7, 2026 — Site built from scratch, following `recursive-tarot/docs/REPLICATE-THE-PATTERN.md`
 
 This is the third site in the family (tarot → astrology → I Ching), and the first one

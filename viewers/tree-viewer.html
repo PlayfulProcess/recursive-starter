@@ -42,7 +42,7 @@
         };
     })();
     </script>
-    <script src="../site-header.js?v=44"></script>
+    <script src="../site-header.js?v=45"></script>
     <script src="../view-switcher.js?v=12"></script>
     <style>
         :root {
@@ -940,11 +940,12 @@
             setupViewLinks();
 
             // Set up header buttons (static mode: local links)
-            // No local casting instrument ships in this repo yet (out of scope for
-            // the initial port — see docs/PLAYBOOK-FIELD-REPORT.md), so this button
-            // is hidden rather than pointed at a page that doesn't exist.
+            // The Path Caster (docs/DESIGN-path-caster.md) shipped Jul 2026 — this
+            // button was hidden per docs/PLAYBOOK-FIELD-REPORT.md's own finding
+            // (a ported "Get a Reading" link pointing at a caster that didn't exist
+            // yet); now that caster.html is a real page, point the button at it.
             const readingBtn = document.getElementById('reading-btn');
-            if (readingBtn) { readingBtn.style.display = 'none'; }
+            if (readingBtn) { readingBtn.textContent = 'Cast a Path'; readingBtn.href = 'caster.html'; readingBtn.style.display = 'inline-flex'; }
             const exploreBtn = document.getElementById('explore-btn');
             if (exploreBtn) { exploreBtn.textContent = 'Genealogy'; exploreBtn.href = '../genealogy.html'; }
             const githubBtn = document.getElementById('github-btn');
