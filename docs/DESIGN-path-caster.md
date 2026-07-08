@@ -33,7 +33,15 @@ is a walk on it:
 - **Distance** between origin A and destiny B = number of differing lines (Hamming, 0–6).
 - **Direct paths** = orderings of the differing-line flips: `d!` minimal routes (up to 720).
   Every intermediate is itself a real hexagram with its own name and text — the path IS a story.
-- **Wandering paths** = allow a line to flip and flip back: any step budget ≥ d with the same
+- **Builder's correction (Jul 2026): the walk space is far larger than the minimal routes.**
+  Paths are DIRECTED — going from the Receptive to the Creative is a different journey than
+  Creative to Receptive, even though the flip-set is symmetric: each step's reading comes from
+  the ORIGIN side's changing-line text, so direction changes every word of the story. And
+  nothing prevents LOOPS — a path may revisit hexagrams, circle, double back; the space of
+  journeys is unbounded. The `d!` count describes only the shortest routes, never the whole
+  territory. The explorer must allow (and the cast modes may occasionally produce) returns
+  and loops — a journey that circles before arriving is a legitimate reading, not an error.
+- **Wandering paths** = allow lines to flip and flip back: any step budget ≥ d with the same
   parity (each detour costs 2). This grounds the "how many steps" setting honestly:
   the UI offers valid budgets only (d, d+2, d+4 …), so the promise "the last step is
   deterministic" is always keepable.
