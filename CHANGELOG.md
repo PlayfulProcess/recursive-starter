@@ -1,5 +1,83 @@
 # Changelog — The Recursive I Ching
 
+## July 9, 2026 — Source Text: the classical Chinese, rendered directly (`viewers/source-text.html`)
+
+Builder's ask: *"there is a bunch of iching seeds maybe the books itself in schemas seeds I
+think. the Chinese version for sure. can we render direct public domain books?"* Answer: yes —
+brought the Chinese-original grammar from `recursive.eco-schemas/iching/` into this repo
+properly and built a dedicated reader for it.
+
+- **Public-domain verification, done before import, not assumed.** The grammar's own
+  description pointed at Project Gutenberg ebook #25501. `WebFetch`/direct `curl` against
+  `gutenberg.org` were blocked by this sandbox's proxy (403, same class of block hit earlier
+  by Wikipedia during the Path Caster work) — verification instead used `WebSearch`, which
+  independently returned Gutenberg's own catalogue title for #25501: **"易經 by Anonymous |
+  Project Gutenberg"** — i.e. the plain classical Chinese *Yijing* text, catalogued with no
+  translator (unlike, say, Legge's 1882 "The Yî King," which Gutenberg lists as its own
+  separate translated edition). Project Gutenberg's entire hosting model is "public domain
+  confirmed in the US, or nothing" — they do not host anything else — so an anonymous-author,
+  untranslated classical Chinese catalogue entry is about as clean a public-domain source as
+  exists. Cross-checked against multiple independent search results (Gutenberg's Chinese-
+  language browse page, other anonymous/unknown-author classical Chinese texts on Gutenberg
+  with the same "Anonymous"/"Unknown" attribution pattern) — nothing contradicted the PD
+  reading, so the import proceeded.
+- **What "with brief translation" in the source repo's own folder name actually meant** (worth
+  recording since it reads ambiguously): inspecting the grammar's items showed the `sections`
+  (Judgment/Image/Line 1–6) are **100% untouched classical Chinese** — no embedded English
+  anywhere in the body text. The only added-by-AI content is the one-to-three-word English
+  hexagram `name` (e.g. "The Creative") — a **title gloss**, not a translation of the passage.
+  The honesty chrome on the new page says this explicitly so nobody mistakes it for a
+  scholarly translation (Wilhelm/Baynes, Legge, or otherwise).
+- **Binary table cross-check.** The Path Caster work (Jul 8) found 5 real bugs in
+  `i-ching-summarized`'s own `metadata.binary` field (hexagrams 15, 16, 46, 63, 64). Before
+  trusting this new grammar's binaries, all 64 were diffed against the corrected, independently
+  verified `scripts/hexagram-binary.json` — **zero mismatches**. This source didn't carry the
+  same bug.
+- **`grammars/i-ching-chinese-original/grammar.json`** (new, 64 items) — cleaned to match this
+  repo's established item shape (id/name/symbol/category/sort_order/sections/keywords/metadata,
+  same fields `i-ching-summarized` uses), with a `_grammar_commons` block spelling out the
+  license/attribution chain (Gutenberg ebook #25501 for the Chinese; PlayfulProcess/Claude Code,
+  CC-BY-SA-4.0, for the one-line name gloss only). Registered in `scripts/build_collection.py`
+  (branch `primary-sources`, same era label as `i-ching-summarized`) and `_collection.json`
+  regenerated — 4 grammars total now (`recursive-eco.json`'s exclude-note count updated to
+  match). The sibling schemas-repo file `i-ching-hd-meta-categories-...-copy/grammar.json` was
+  checked and found to be a 93/94-item **subset duplicate** of this repo's own
+  `three-lenses-64` (identical description, near-identical items) — correctly **not** ported,
+  per the brief's own instruction not to duplicate.
+- **`check.py`** (new, repo root) — this repo had no grammar validator of its own; every other
+  active family repo does (`recursive-astrology/check.py`, `recursive-tarot/scripts/check_all.py`).
+  Ported astro's minimal gate (JSON parses, required top-level fields, `grammar_type` in the
+  known set, every item has id/name/sections, `composite_of` refs resolve, no stray
+  `metadata.video_id`). All 4 grammars in this repo pass.
+- **`viewers/source-text.html`** (new) — a single-hexagram reader, mobile-first, that stacks
+  **three separate, clearly-labeled layers** for whichever hexagram is selected: (1) *Original
+  Chinese · Project Gutenberg, public domain* — the raw source sections, set in a CJK-capable
+  serif stack; (2) *This site's English reading · i-ching-summarized* — the existing flagship
+  condensation, sections in the same order; (3) *Cross-lens reading · Three Lenses* — the
+  Human Design/zodiac/chakra keywords for that hexagram, where one exists. Prev/Next + a
+  64-hexagram `<select>` for navigation, `?hex=N` deep-linking (`history.replaceState`, no
+  reload). An honesty box up top states the Gutenberg/PD provenance, the AI-gloss-not-translation
+  caveat, and links directly to the ebook page — matching the family's honesty-chrome
+  convention (the Path Caster's "a casting, not a prediction" kicker is the same move applied
+  to a different risk: mistaking a title gloss for a scholarly translation).
+- **Wired in beside the ported set**: `site-header.js`'s Views dropdown gained a "Source Text"
+  entry (in the same "By grammar" group as Cards/Explorer/Lenses/Tree — this reads one grammar
+  closely, same as those, just cross-referenced against two others); `index.html`'s gallery
+  gained a matching card. `site-header.js?v=` bumped 45→46 across every page that includes it
+  (cache-bust for the changed dropdown contents).
+- **Verified with Playwright at 390×844** (headless Chromium, installed fresh in-session —
+  this repo has no browser-automation harness yet, so the browser + CJK font check was done
+  ad hoc rather than against a checked-in test): hexagram 1's Chinese Judgment rendered as
+  `元，亨，利，貞。` (byte-correct, not mojibake — confirmed via `WenQuanYi Zen Hei`, the
+  system's installed CJK font, since no CJK webfont is loaded); all 3 layers rendered; the
+  honesty box's Gutenberg link and AI-gloss language were present in the DOM; `?hex=15` deep-link
+  landed on the correct hexagram (Modesty, matching the verified binary table) with correct
+  Chinese text; Prev/Next navigation worked; the `index.html` card and `site-header.js` dropdown
+  both linked correctly; zero console errors traceable to this page's own code (the only
+  failures were this sandbox's proxy blocking `fonts.googleapis.com` and
+  `recursive.eco/js/assistant-launcher.js` — pre-existing, unrelated to this change, and a
+  harmless `/favicon.ico` 404 present repo-wide).
+
 ## July 8, 2026 — The Path Caster: the site's own instrument (`viewers/caster.html`)
 
 Built per `docs/DESIGN-path-caster.md` (the builder's design) — the I Ching site's

@@ -14,6 +14,7 @@
       "id": "primary-sources",
       "name": "Primary Sources — the classical text itself, in translation",
       "deck_slugs": [
+        "i-ching-chinese-original",
         "i-ching-summarized"
       ]
     },
@@ -33,6 +34,21 @@
     }
   ],
   "grammars": [
+    {
+      "slug": "i-ching-chinese-original",
+      "name": "I Ching — Chinese Original (Project Gutenberg)",
+      "type": "iching",
+      "branch": "primary-sources",
+      "is_meta": false,
+      "default_preview": null,
+      "items": 64,
+      "cover_image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/I-Ching-chinese-book.jpg",
+      "blurb": "The classical Chinese source text -- Judgment, Image, and all six Line statements -- for each of the 64 hexagrams, character for character as digitized by Project Gutenberg (ebook #25501, 易經, catalogu…",
+      "path": "grammars/i-ching-chinese-original/grammar.json",
+      "provenance": "record",
+      "year": -1000,
+      "year_label": "Zhou I Ching, compiled c. 1046–256 BCE · classical Chinese, Project Gutenberg ebook #25501, no translation layer"
+    },
     {
       "slug": "i-ching-summarized",
       "name": "The 64 Hexagrams",

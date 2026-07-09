@@ -39,9 +39,10 @@ BRANCHES = [
 # but NOT load-bearing: any grammar not listed here still appears in the collection,
 # just in "synthesis" with no curated year — an honest "undated" default, never a guess.
 BRANCH_OF = {
-    "i-ching-summarized":  "primary-sources",
-    "three-lenses-64":     "synthesis",
-    "repair-iching":       "readings",
+    "i-ching-summarized":     "primary-sources",
+    "i-ching-chinese-original": "primary-sources",
+    "three-lenses-64":        "synthesis",
+    "repair-iching":          "readings",
 }
 
 # slug -> (sortable year, display label, provenance). Only the classical text itself
@@ -51,6 +52,11 @@ YEARS = {
     "i-ching-summarized": (
         -1000,
         "Zhou I Ching, compiled c. 1046–256 BCE · this English condensation's own translation lineage is undocumented",
+        "record",
+    ),
+    "i-ching-chinese-original": (
+        -1000,
+        "Zhou I Ching, compiled c. 1046–256 BCE · classical Chinese, Project Gutenberg ebook #25501, no translation layer",
         "record",
     ),
 }

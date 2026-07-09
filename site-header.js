@@ -42,10 +42,11 @@
   // [key, label, href] — every content VIEW of this repo's data, in two groups
   // (mirrors recursive-tarot's Views menu: card-level vs collection-level).
   const CARD_VIEWS = [
-    ['cards',    'Cards',    PFX + 'viewers/cards.html'],
-    ['explorer', 'Explorer', PFX + 'viewers/explorer.html'],
-    ['lenses',   'Lenses',   PFX + 'viewers/lenses.html'],
-    ['tree',     'Tree',     PFX + 'viewers/tree-viewer.html'],
+    ['cards',    'Cards',       PFX + 'viewers/cards.html'],
+    ['explorer', 'Explorer',    PFX + 'viewers/explorer.html'],
+    ['lenses',   'Lenses',      PFX + 'viewers/lenses.html'],
+    ['tree',     'Tree',        PFX + 'viewers/tree-viewer.html'],
+    ['source',   'Source Text', PFX + 'viewers/source-text.html'],
   ];
   const COLLECTION_VIEWS = [
     ['timeline',  'Timeline',     PFX + 'viewers/timeline.html'],
@@ -71,6 +72,7 @@
     if (f.startsWith('explorer')) return 'explorer';
     if (f.startsWith('lenses')) return 'lenses';
     if (f.startsWith('tree-viewer')) return 'tree';
+    if (f.startsWith('source-text')) return 'source';
     if (f.startsWith('timeline')) return 'timeline';
     if (f.startsWith('caster')) return 'caster';
     if (f.startsWith('course-viewer') || f.startsWith('course')) return 'course';

@@ -18,7 +18,7 @@
   "grammars": {
     "paths": ["grammars/*/grammar.json"],
     "exclude": [],
-    "_exclude_note": "All three grammars in this repo are real, castable/readable content — none are generated meta or reference-only apparatus, so nothing is excluded (unlike tarot's all-decks-many-lenses / tree-of-tarot / people-of-tarot / books-of-tarot, which are meta grammars this repo has no equivalent of yet).",
+    "_exclude_note": "All four grammars in this repo are real, castable/readable content — none are generated meta or reference-only apparatus, so nothing is excluded (unlike tarot's all-decks-many-lenses / tree-of-tarot / people-of-tarot / books-of-tarot, which are meta grammars this repo has no equivalent of yet).",
     "id_map": "ids.json"
   },
   "maintainers": ["pp@playfulprocess.com"],
