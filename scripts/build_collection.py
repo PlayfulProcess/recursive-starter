@@ -41,6 +41,8 @@ BRANCHES = [
 BRANCH_OF = {
     "i-ching-summarized":     "primary-sources",
     "i-ching-chinese-original": "primary-sources",
+    "zhouyi-core":            "primary-sources",
+    "ten-wings":              "primary-sources",
     "three-lenses-64":        "synthesis",
     "repair-iching":          "readings",
 }
@@ -57,6 +59,16 @@ YEARS = {
     "i-ching-chinese-original": (
         -1000,
         "Zhou I Ching, compiled c. 1046–256 BCE · classical Chinese, Project Gutenberg ebook #25501, no translation layer",
+        "record",
+    ),
+    "zhouyi-core": (
+        -825,
+        "Zhouyi core (Judgment + Line statements), late Western Zhou, c. 9th century BCE (Shaughnessy) · English: James Legge 1882, public domain",
+        "record",
+    ),
+    "ten-wings": (
+        -250,
+        "Ten Wings, Confucian school, late Warring States–early Han, c. 350–100 BCE · English: James Legge 1882, public domain",
         "record",
     ),
 }

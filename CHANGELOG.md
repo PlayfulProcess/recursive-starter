@@ -1,5 +1,51 @@
 # Changelog — The Recursive I Ching
 
+## July 9, 2026 — Stratigraphy grammars: `zhouyi-core` + `ten-wings` (the book as layers)
+
+Per `docs/PLAN-iching-channel.md` §2: the repo's idiosyncratic structure is the I Ching's own
+shape — one book in strata across ~3,000 years — so two new grammars carry the two oldest
+English-readable layers, kept apart so a reader can SEE which layer is which.
+
+- **`grammars/zhouyi-core`** — the Western Zhou divination core: Judgment (guaci) + six Line
+  statements (yaoci) per hexagram, nothing else (plus the "use of nines/sixes" paragraph that
+  exists only for hexagrams 1–2). English: **James Legge's public-domain translation** (The Yî
+  King, SBE vol. XVI, 1882/1899). Wilhelm (not PD) was never used. The description teaches the
+  built-in stratigraphy lesson: Legge's (parentheses) mark his own interpolations — delete them
+  mentally and the Bronze Age oracle's bareness shows.
+- **`grammars/ten-wings`** — the Confucian layer as its OWN grammar: the complete **Great Image
+  (Daxiang)** for all 64 hexagrams (Legge, Appendix II) + 8 concept items describing the Ten
+  Wings (overview, Tuan, Xiang, Xici, Wenyan, Shuogua, Xugua, Zagua) — own synthesis, ✔/○
+  marked, each with a verbatim Legge sample quote pulled from the PD Appendixes. Honest thesis,
+  stated with confidence, not contempt: Wings composed c. 350–100 BCE by multiple Confucian-
+  school hands, centuries after the core; "Confucius wrote them" doubted since Ouyang Xiu
+  (11th c.) and rejected by modern scholarship (Shaughnessy; Rutt; Redmond & Hon — verified
+  via WebSearch this session).
+- **Sourcing under a proxy block, and the verification method** (the part worth reusing):
+  sacred-texts.com and gutenberg.org are egress-blocked from this sandbox, but GitHub raw is
+  open — so the Legge text came from **three independent digitizations fetched losslessly at
+  pinned commit SHAs**, then **diffed word-by-word across ALL 64 hexagrams** (not a sample):
+  ~137 diff sites were transliteration only (Khien/Qian); every substantive residual was
+  adjudicated by 2-of-3 agreement and recorded in an explicit patch list in the build script
+  (hex 30's dropped "nourish the cow" sentence restored; hex 51/55 "topmost SIX"; OCR
+  "cars"→"ears", "he"→"be", "tinder"→"under"; two unbalanced-paren digitization typos).
+  Hexagrams 1, 2, 11, 12, 63, 64 were additionally hand-read against the sacred-texts scrape.
+  Per-item `metadata.confidence` + `_source` per the family convention (astro's
+  renaissance-lilly pattern).
+- **Keys for the viewers**: ids `hex-1`…`hex-64`, `metadata.number`, `metadata.binary` copied
+  from `scripts/hexagram-binary.json` (the canonical table — NOT re-derived), Chinese name +
+  pinyin copied from `i-ching-chinese-original`.
+- **Wiring**: registered in `scripts/build_collection.py` (primary-sources, years −825/−250,
+  labels citing Shaughnessy's dating and Legge 1882), `_collection.json` regenerated (6
+  grammars, 372 items). `viewers/source-text.html` now stacks **five** labeled layers in
+  stratigraphic order: Chinese original → Zhouyi core (oldest) → Ten Wings Great Image
+  (Confucian addition) → this site's English reading → cross-lens. `python3 check.py` passes
+  (6 grammars); Playwright at 390×844 verified hex 1/30/64 render all five layers with no page
+  errors (only pre-existing external-resource blocks: Google Fonts + the recursive.eco
+  assistant launcher, both proxy-blocked locally).
+- **Scoped out**: full Tuan/Xiaoxiang/Xici/Wenyan text (a book, not a grammar item set); the
+  contemplative-daoist lens (builder-authored, per the plan); the course (§3); Supabase/ids.json
+  publish-loop rows (orchestrator's job).
+
 ## July 9, 2026 — Source Text: the classical Chinese, rendered directly (`viewers/source-text.html`)
 
 Builder's ask: *"there is a bunch of iching seeds maybe the books itself in schemas seeds I

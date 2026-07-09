@@ -15,7 +15,9 @@
       "name": "Primary Sources — the classical text itself, in translation",
       "deck_slugs": [
         "i-ching-chinese-original",
-        "i-ching-summarized"
+        "i-ching-summarized",
+        "ten-wings",
+        "zhouyi-core"
       ]
     },
     {
@@ -78,6 +80,21 @@
       "provenance": "living"
     },
     {
+      "slug": "ten-wings",
+      "name": "The Ten Wings — the Confucian Layer",
+      "type": "custom",
+      "branch": "primary-sources",
+      "is_meta": false,
+      "default_preview": null,
+      "items": 72,
+      "cover_image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Konfuzius-1770.jpg",
+      "blurb": "The commentarial stratum of the I Ching, held apart as its own grammar so you can SEE the moralizing layer as an addition, not the origin. The Ten Wings (Shiyi) were composed by multiple hands in the …",
+      "path": "grammars/ten-wings/grammar.json",
+      "provenance": "record",
+      "year": -250,
+      "year_label": "Ten Wings, Confucian school, late Warring States–early Han, c. 350–100 BCE · English: James Legge 1882, public domain"
+    },
+    {
       "slug": "three-lenses-64",
       "name": "Three Lenses for Viewing the 64 Hexagrams",
       "type": "custom",
@@ -89,6 +106,21 @@
       "blurb": "This interpretation maps the 64 I Ching hexagrams to Human Design 'gates'—a synthesis channeled by Ra Uru Hu in 1987 after an eight-day encounter with 'the Voice' on Ibiza. The system is only about 30…",
       "path": "grammars/three-lenses-64/grammar.json",
       "provenance": "living"
+    },
+    {
+      "slug": "zhouyi-core",
+      "name": "Zhouyi Core — the Oldest Layer",
+      "type": "iching",
+      "branch": "primary-sources",
+      "is_meta": false,
+      "default_preview": null,
+      "items": 64,
+      "cover_image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/I-Ching-chinese-book.jpg",
+      "blurb": "The bottom stratum of the I Ching: for each of the 64 hexagrams, the Judgment (guaci) and the six Line statements (yaoci) — and nothing else. No Image, no 'superior man', no moral philosophy: those be…",
+      "path": "grammars/zhouyi-core/grammar.json",
+      "provenance": "record",
+      "year": -825,
+      "year_label": "Zhouyi core (Judgment + Line statements), late Western Zhou, c. 9th century BCE (Shaughnessy) · English: James Legge 1882, public domain"
     }
   ]
 }

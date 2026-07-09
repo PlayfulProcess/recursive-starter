@@ -97,7 +97,10 @@
     English hexagram <em>name</em> under each is an <b>AI-generated one-line gloss</b> (Claude Code), a title, not a
     scholarly translation of the full passage — do not mistake it for Wilhelm, Legge, or any human translation.
     The other layers below (this site's English reading, the cross-lens gate/sign/chakra reading) are separate,
-    later, clearly-marked works — never confused with the source above them.
+    later, clearly-marked works — never confused with the source above them. The two <b>Legge layers</b>
+    (Zhouyi core; Ten Wings Great Image) are James Legge's <b>public-domain translation</b> (1882), stacked in
+    stratigraphic order: the Western Zhou divination core first, the Confucian commentary — added centuries
+    later — after it, each labeled with its own era.
   </div>
 
   <div class="picker">
@@ -119,23 +122,25 @@
   const PFX = '../';
   const LINE_ORDER = ['Judgment', 'Image', 'Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5', 'Line 6'];
 
-  let byNumber = {}; // n -> { chinese: item, summ: item, lens: item|null }
+  let byNumber = {}; // n -> { chinese: item, zhouyi: item|null, wings: item|null, summ: item, lens: item|null }
   let current = 1;
 
   async function boot() {
-    const [chinese, summarized, lenses] = await Promise.all([
+    const [chinese, zhouyi, wings, summarized, lenses] = await Promise.all([
       fetch(PFX + 'grammars/i-ching-chinese-original/grammar.json').then(r => r.json()),
+      fetch(PFX + 'grammars/zhouyi-core/grammar.json').then(r => r.json()).catch(() => null),
+      fetch(PFX + 'grammars/ten-wings/grammar.json').then(r => r.json()).catch(() => null),
       fetch(PFX + 'grammars/i-ching-summarized/grammar.json').then(r => r.json()).catch(() => null),
       fetch(PFX + 'grammars/three-lenses-64/grammar.json').then(r => r.json()).catch(() => null),
     ]);
 
-    const summByNum = {};
-    if (summarized && summarized.items) {
-      for (const it of summarized.items) {
-        const n = it.metadata && it.metadata.number;
-        if (n) summByNum[n] = it;
-      }
-    }
+    const numOf = it => (it.metadata && it.metadata.number) || (( /^hex-(\d+)$/.exec(it.id || '') || [])[1] && +/^hex-(\d+)$/.exec(it.id)[1]) || null;
+    const byNum = g => {
+      const map = {};
+      if (g && g.items) for (const it of g.items) { const n = numOf(it); if (n) map[n] = it; }
+      return map;
+    };
+    const zhouyiByNum = byNum(zhouyi), wingsByNum = byNum(wings), summByNum = byNum(summarized);
     const lensByNum = {};
     if (lenses && lenses.items) {
       for (const it of lenses.items) {
@@ -145,7 +150,8 @@
     }
     for (const it of chinese.items) {
       const n = it.metadata.number;
-      byNumber[n] = { chinese: it, summ: summByNum[n] || null, lens: lensByNum[n] || null };
+      byNumber[n] = { chinese: it, zhouyi: zhouyiByNum[n] || null, wings: wingsByNum[n] || null,
+                      summ: summByNum[n] || null, lens: lensByNum[n] || null };
     }
 
     populatePicker();
@@ -195,7 +201,7 @@
   function render() {
     const rec = byNumber[current];
     if (!rec) { $('#content').innerHTML = '<p class="placeholder">Hexagram not found.</p>'; return; }
-    const c = rec.chinese, s = rec.summ, l = rec.lens;
+    const c = rec.chinese, z = rec.zhouyi, w = rec.wings, s = rec.summ, l = rec.lens;
 
     let html = `<div class="hexhead">
       <div class="hexsym">${esc(c.symbol)}</div>
@@ -214,7 +220,25 @@
       <a class="gutenberg-link" href="https://www.gutenberg.org/ebooks/25501" target="_blank" rel="noopener">Read ebook #25501 on Project Gutenberg ↗</a>
     </div>`;
 
-    // Layer 2 — this site's English condensation
+    // Layer 2 — the Zhouyi core, the OLDEST stratum (late Western Zhou), Legge's PD translation
+    if (z) {
+      html += `<div class="layer">
+        <div class="lyt">Zhouyi core — the oldest layer <span class="src">· Judgment + Line statements, late Western Zhou (c. 9th c. BCE) · English: James Legge 1882, public domain</span></div>
+        <p class="lynote">The divination text at the bottom of the book — pre-Confucian, no moral commentary. Everything in (parentheses) is Legge's own interpolation, not the original.</p>
+        ${sectionsHTML(z.sections, '')}
+      </div>`;
+    }
+
+    // Layer 3 — the Ten Wings' Great Image, the Confucian stratum (Warring States–Han)
+    if (w) {
+      html += `<div class="layer">
+        <div class="lyt">Ten Wings — the Confucian layer <span class="src">· Great Image (Daxiang), c. 350–100 BCE, added centuries later · English: James Legge 1882, public domain</span></div>
+        <p class="lynote">The 'superior man' moral reading — a later stratum, so you can see the moralizing layer as an addition, not the origin.</p>
+        ${sectionsHTML(w.sections, '')}
+      </div>`;
+    }
+
+    // Layer 4 — this site's English condensation
     if (s) {
       html += `<div class="layer">
         <div class="lyt">This site's English reading <span class="src">· i-ching-summarized, translation lineage unverified</span></div>
@@ -222,7 +246,7 @@
       </div>`;
     }
 
-    // Layer 3 — cross-lens synthesis (if this hexagram has one)
+    // Layer 5 — cross-lens synthesis (if this hexagram has one)
     if (l) {
       html += `<div class="layer">
         <div class="lyt">Cross-lens reading <span class="src">· Three Lenses (Human Design / zodiac / chakra synthesis, held lightly)</span></div>
