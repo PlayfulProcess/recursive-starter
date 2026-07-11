@@ -1,5 +1,19 @@
 # Changelog — The Recursive I Ching
 
+## July 11, 2026 — `GRAMMAR_FORMAT.md` added (docs consolidation)
+
+This repo was missing `GRAMMAR_FORMAT.md` entirely, even though
+`recursive-tarot/docs/REPLICATE-THE-PATTERN.md` (the fork playbook this repo
+was built from) says every fork should carry it forward. Added the mirrored
+copy — synced from the canonical `recursive.eco-schemas/GRAMMAR_FORMAT.md`,
+which this round also extended with `ref_item_id`, `performance.words`, and
+`_category_roles`/`_section_roles` documentation (three real, shipped fields
+that had no public write-up until now). Standard header note: *"Mirrored copy
+— canonical version lives in recursive.eco-schemas; if they differ, that one
+wins."* Listed in the README file tree. Also added one line to
+`docs/HOW-TO-WRITE-A-COURSE.md` (identical across tarot/astrology/starter):
+courses should link to `GRAMMAR_FORMAT.md` for field shapes, not restate them.
+
 ## July 9, 2026 — Stratigraphy grammars: `zhouyi-core` + `ten-wings` (the book as layers)
 
 Per `docs/PLAN-iching-channel.md` §2: the repo's idiosyncratic structure is the I Ching's own

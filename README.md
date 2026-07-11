@@ -27,7 +27,9 @@ recursive-starter/
 │                                  the Three Lenses reading, chapters read live from three-lenses-64
 ├── scripts/build_collection.py    rebuild grammars/_collection.json after adding/editing a grammar
 ├── recursive-eco.json             channel manifest (how recursive.eco imports this repo)
-└── ids.json                       slug -> recursive.eco grammar UUID (skeleton — nothing published yet)
+├── ids.json                       slug -> recursive.eco grammar UUID (skeleton — nothing published yet)
+└── GRAMMAR_FORMAT.md              grammar-JSON format reference — mirrored copy; canonical version is
+                                    recursive.eco-schemas/GRAMMAR_FORMAT.md
 ```
 
 ## This repo is a playbook experiment
